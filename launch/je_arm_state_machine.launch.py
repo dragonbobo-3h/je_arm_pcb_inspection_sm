@@ -3,6 +3,7 @@ from launch.actions import DeclareLaunchArgument, ExecuteProcess, TimerAction
 from launch.substitutions import EnvironmentVariable
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
+from launch_ros.parameter_descriptions import ParameterValue
 from ament_index_python.packages import get_package_share_directory
 import os
 import yaml
@@ -19,6 +20,9 @@ def load_yaml(file_path):
 def generate_launch_description():
     publish_static_obstacles = LaunchConfiguration("publish_static_obstacles")
     enable_virtual_grasp_boxes = LaunchConfiguration("enable_virtual_grasp_boxes")
+    enable_gripper_control = LaunchConfiguration("enable_gripper_control")
+    simulated_gripper_action_sec = LaunchConfiguration("simulated_gripper_action_sec")
+    gripper_action_delay_sec = LaunchConfiguration("gripper_action_delay_sec")
     pcb_detection_topic = LaunchConfiguration("pcb_detection_topic")
     place_slot_topic = LaunchConfiguration("place_slot_topic")
     inspect_done_topic = LaunchConfiguration("inspect_done_topic")
@@ -91,9 +95,9 @@ def generate_launch_description():
                 "export PATH=/usr/bin:/bin:/usr/sbin:/sbin:$PATH && "
                 "export ROS_DOMAIN_ID=199 && "
                 "source /opt/ros/humble/setup.bash && "
-                "source /home/test/ros2_ws/install/setup.bash && "
+                "source /home/agx/ros2_ws/install/setup.bash && "
                 "echo 'SMACC2 keyboard ready: s(start), n(next step), w(loop), p(pause), r(resume), b(back), f(fault), u(resource-unavailable)' && "
-                "/usr/bin/python3 /home/test/ros2_ws/install/cl_keyboard/lib/cl_keyboard/keyboard_server_node.py; "
+                "/usr/bin/python3 /home/agx/ros2_ws/install/cl_keyboard/lib/cl_keyboard/keyboard_server_node.py; "
                 "echo; echo 'keyboard_server_node exited'; "
                 "read -r -n 1 -s -p 'Press any key to close...'"
             ),
@@ -115,6 +119,9 @@ def generate_launch_description():
                     {
                         "publish_static_obstacles": publish_static_obstacles,
                         "enable_virtual_grasp_boxes": enable_virtual_grasp_boxes,
+                        "enable_gripper_control": ParameterValue(enable_gripper_control, value_type=bool),
+                        "simulated_gripper_action_sec": ParameterValue(simulated_gripper_action_sec, value_type=float),
+                        "gripper_action_delay_sec": ParameterValue(gripper_action_delay_sec, value_type=float),
                         "pcb_detection_topic": pcb_detection_topic,
                         "place_slot_topic": place_slot_topic,
                         "inspect_done_topic": inspect_done_topic,
@@ -143,6 +150,21 @@ def generate_launch_description():
                 "enable_virtual_grasp_boxes",
                 default_value="true",
                 description="Whether the SM should create cl_moveit2z virtual grasp boxes on arm startup",
+            ),
+            DeclareLaunchArgument(
+                "enable_gripper_control",
+                default_value="true",
+                description="Whether to send real gripper commands; false simulates each open/close action",
+            ),
+            DeclareLaunchArgument(
+                "simulated_gripper_action_sec",
+                default_value="2.0",
+                description="Simulated duration for a gripper open/close action when gripper control is disabled",
+            ),
+            DeclareLaunchArgument(
+                "gripper_action_delay_sec",
+                default_value="0.0",
+                description="Optional extra settle time after a gripper action reaches its completion condition; applies in real mode and overrides simulated duration when > 0",
             ),
             DeclareLaunchArgument(
                 "pcb_detection_topic",

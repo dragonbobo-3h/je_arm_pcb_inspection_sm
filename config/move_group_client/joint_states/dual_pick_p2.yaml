@@ -1,11 +1,11 @@
 joint_states:
-  joint11: 0.0
+  joint11: 0.4041
   joint12: -1.570000
   joint13: -1.563129
-  joint14: -1.7170
+  joint14: -2.0904
   joint15: 0.0
   joint16: 1.4142
-  joint17: 0.4869
+  joint17: 0.4774
   joint21: 0.0
   joint22: -1.570000
   joint23: -1.763129

@@ -62,8 +62,42 @@ struct SmJeArmPcbInspection : public smacc2::SmaccStateMachineBase<SmJeArmPcbIns
   void onInitialize() override 
   { 
     auto node = this->getNode();
+
+    if (!node->has_parameter("publish_static_obstacles"))
+    {
+      node->declare_parameter<bool>("publish_static_obstacles", true);
+    }
+    if (!node->has_parameter("enable_gripper_control"))
+    {
+      node->declare_parameter<bool>("enable_gripper_control", false);
+    }
+    if (!node->has_parameter("simulated_gripper_action_sec"))
+    {
+      node->declare_parameter<double>("simulated_gripper_action_sec", 2.0);
+    }
+    if (!node->has_parameter("gripper_action_delay_sec"))
+    {
+      node->declare_parameter<double>("gripper_action_delay_sec", 0.0);
+    }
+
     bool publishStaticObstacles = true;
+    bool enableGripperControl = false;
+    double simulatedGripperActionSec = 2.0;
+    double gripperActionDelaySec = 0.0;
+
     node->get_parameter_or("publish_static_obstacles", publishStaticObstacles, true);
+    node->get_parameter_or("enable_gripper_control", enableGripperControl, false);
+    node->get_parameter_or("simulated_gripper_action_sec", simulatedGripperActionSec, 2.0);
+    node->get_parameter_or("gripper_action_delay_sec", gripperActionDelaySec, 0.0);
+
+    RCLCPP_INFO(
+      log_utils::bizLogger(),
+      "[%s] SM params | publish_static_obstacles=%d enable_gripper_control=%d simulated_gripper_action_sec=%.2f gripper_action_delay_sec=%.2f",
+      log_utils::bjtNowString().c_str(),
+      publishStaticObstacles,
+      enableGripperControl,
+      simulatedGripperActionSec,
+      gripperActionDelaySec);
 
     this->setGlobalSMData(std::string(sm_data::kResumeStateId), std::string(sm_data::kWaitResourcesState));
     this->setGlobalSMData(std::string(sm_data::kResumeFromPause), false);

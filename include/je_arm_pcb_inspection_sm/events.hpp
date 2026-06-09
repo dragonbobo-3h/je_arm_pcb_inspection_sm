@@ -80,6 +80,7 @@ struct EvWorkResumeToPlace : sc::event<EvWorkResumeToPlace> {};
 // INSPECT 内部恢复路由事件
 struct EvInspectResumeToFrontPose : sc::event<EvInspectResumeToFrontPose> {};
 struct EvInspectResumeToAlignForRightHandover : sc::event<EvInspectResumeToAlignForRightHandover> {};
+struct EvInspectResumeToRightBothGrippersClose : sc::event<EvInspectResumeToRightBothGrippersClose> {};
 struct EvInspectResumeToRightGripperOpenReceive : sc::event<EvInspectResumeToRightGripperOpenReceive> {};
 struct EvInspectResumeToRightApproach : sc::event<EvInspectResumeToRightApproach> {};
 struct EvInspectResumeToRightGripperClose : sc::event<EvInspectResumeToRightGripperClose> {};
@@ -87,6 +88,7 @@ struct EvInspectResumeToLeftGripperOpen : sc::event<EvInspectResumeToLeftGripper
 struct EvInspectResumeToRightRetreat : sc::event<EvInspectResumeToRightRetreat> {};
 struct EvInspectResumeToRightView : sc::event<EvInspectResumeToRightView> {};
 struct EvInspectResumeToAlignForLeftHandover : sc::event<EvInspectResumeToAlignForLeftHandover> {};
+struct EvInspectResumeToLeftBothGrippersClose : sc::event<EvInspectResumeToLeftBothGrippersClose> {};
 struct EvInspectResumeToLeftGripperOpenReceive : sc::event<EvInspectResumeToLeftGripperOpenReceive> {};
 struct EvInspectResumeToLeftApproach : sc::event<EvInspectResumeToLeftApproach> {};
 struct EvInspectResumeToLeftGripperClose : sc::event<EvInspectResumeToLeftGripperClose> {};

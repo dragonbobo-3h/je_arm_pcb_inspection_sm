@@ -42,7 +42,7 @@ struct StInspectAlignForRightHandover : smacc2::SmaccState<StInspectAlignForRigh
   void onEntry()
   {
     this->setGlobalSMData(std::string(sm_data::kInspectResumeSubstateId), std::string(sm_data::kInspectSubstateAlignForRightHandover));
-    this->setGlobalSMData(std::string(sm_data::kInspectDelayNextSubstateId), std::string(sm_data::kInspectSubstateRightGripperOpenReceive));
+    this->setGlobalSMData(std::string(sm_data::kInspectDelayNextSubstateId), std::string(sm_data::kInspectSubstateRightBothGrippersClose));
     this->setGlobalSMData(std::string(sm_data::kResumeStateId), std::string(sm_data::kWorkState));
     this->setGlobalSMData(std::string(sm_data::kWorkResumeSubstateId), std::string(sm_data::kWorkSubstateInspect));
     this->setGlobalSMData(std::string(sm_data::kWorkDelayNextSubstateId), std::string(sm_data::kWorkSubstateInspect));

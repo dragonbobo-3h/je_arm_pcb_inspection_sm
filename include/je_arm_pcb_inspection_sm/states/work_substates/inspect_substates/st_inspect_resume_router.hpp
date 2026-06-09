@@ -7,6 +7,7 @@
 #include "je_arm_pcb_inspection_sm/sm_data.hpp"
 #include "je_arm_pcb_inspection_sm/states/work_substates/inspect_substates/st_inspect_front_pose.hpp"
 #include "je_arm_pcb_inspection_sm/states/work_substates/inspect_substates/st_inspect_align_for_right_handover.hpp"
+#include "je_arm_pcb_inspection_sm/states/work_substates/inspect_substates/st_inspect_right_both_grippers_close.hpp"
 #include "je_arm_pcb_inspection_sm/states/work_substates/inspect_substates/st_inspect_right_gripper_open_receive.hpp"
 #include "je_arm_pcb_inspection_sm/states/work_substates/inspect_substates/st_inspect_right_approach.hpp"
 #include "je_arm_pcb_inspection_sm/states/work_substates/inspect_substates/st_inspect_right_gripper_close.hpp"
@@ -14,6 +15,7 @@
 #include "je_arm_pcb_inspection_sm/states/work_substates/inspect_substates/st_inspect_right_retreat.hpp"
 #include "je_arm_pcb_inspection_sm/states/work_substates/inspect_substates/st_inspect_right_view.hpp"
 #include "je_arm_pcb_inspection_sm/states/work_substates/inspect_substates/st_inspect_align_for_left_handover.hpp"
+#include "je_arm_pcb_inspection_sm/states/work_substates/inspect_substates/st_inspect_left_both_grippers_close.hpp"
 #include "je_arm_pcb_inspection_sm/states/work_substates/inspect_substates/st_inspect_left_gripper_open_receive.hpp"
 #include "je_arm_pcb_inspection_sm/states/work_substates/inspect_substates/st_inspect_left_approach.hpp"
 #include "je_arm_pcb_inspection_sm/states/work_substates/inspect_substates/st_inspect_left_gripper_close.hpp"
@@ -40,6 +42,7 @@ struct StInspectResumeRouter : smacc2::SmaccState<StInspectResumeRouter, StInspe
   typedef boost::mpl::list<
     smacc2::Transition<EvInspectResumeToFrontPose, StInspectFrontPose>,
     smacc2::Transition<EvInspectResumeToAlignForRightHandover, StInspectAlignForRightHandover>,
+    smacc2::Transition<EvInspectResumeToRightBothGrippersClose, StInspectRightBothGrippersClose>,
     smacc2::Transition<EvInspectResumeToRightGripperOpenReceive, StInspectRightGripperOpenReceive>,
     smacc2::Transition<EvInspectResumeToRightApproach, StInspectRightApproach>,
     smacc2::Transition<EvInspectResumeToRightGripperClose, StInspectRightGripperClose>,
@@ -47,6 +50,7 @@ struct StInspectResumeRouter : smacc2::SmaccState<StInspectResumeRouter, StInspe
     smacc2::Transition<EvInspectResumeToRightRetreat, StInspectRightRetreat>,
     smacc2::Transition<EvInspectResumeToRightView, StInspectRightView>,
     smacc2::Transition<EvInspectResumeToAlignForLeftHandover, StInspectAlignForLeftHandover>,
+    smacc2::Transition<EvInspectResumeToLeftBothGrippersClose, StInspectLeftBothGrippersClose>,
     smacc2::Transition<EvInspectResumeToLeftGripperOpenReceive, StInspectLeftGripperOpenReceive>,
     smacc2::Transition<EvInspectResumeToLeftApproach, StInspectLeftApproach>,
     smacc2::Transition<EvInspectResumeToLeftGripperClose, StInspectLeftGripperClose>,
@@ -70,6 +74,10 @@ struct StInspectResumeRouter : smacc2::SmaccState<StInspectResumeRouter, StInspe
     if (substate == sm_data::kInspectSubstateAlignForRightHandover)
     {
       this->template postEvent<EvInspectResumeToAlignForRightHandover>();
+    }
+    else if (substate == sm_data::kInspectSubstateRightBothGrippersClose)
+    {
+      this->template postEvent<EvInspectResumeToRightBothGrippersClose>();
     }
     else if (substate == sm_data::kInspectSubstateRightGripperOpenReceive)
     {
@@ -98,6 +106,10 @@ struct StInspectResumeRouter : smacc2::SmaccState<StInspectResumeRouter, StInspe
     else if (substate == sm_data::kInspectSubstateAlignForLeftHandover)
     {
       this->template postEvent<EvInspectResumeToAlignForLeftHandover>();
+    }
+    else if (substate == sm_data::kInspectSubstateLeftBothGrippersClose)
+    {
+      this->template postEvent<EvInspectResumeToLeftBothGrippersClose>();
     }
     else if (substate == sm_data::kInspectSubstateLeftGripperOpenReceive)
     {

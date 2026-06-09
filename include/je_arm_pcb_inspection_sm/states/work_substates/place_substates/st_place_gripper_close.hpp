@@ -4,7 +4,6 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include <cl_moveit2z/client_behaviors/cb_ctrl_gripper.hpp>
-
 #include "je_arm_pcb_inspection_sm/events.hpp"
 #include "je_arm_pcb_inspection_sm/orthogonals/or_arm.hpp"
 #include "je_arm_pcb_inspection_sm/sm_data.hpp"

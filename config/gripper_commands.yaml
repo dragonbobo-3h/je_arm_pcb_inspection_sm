@@ -51,5 +51,11 @@ gripper_commands:
     mode: torque
     command: open
     torque: 1.0
+
+  dual_close:
+    mode: torque
+    command: close
+    torque: 0.5
     left_valid: true
-    right_valid: false
+    right_valid: true
+    wait_for_feedback: true
