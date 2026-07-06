@@ -79,25 +79,39 @@ struct SmJeArmPcbInspection : public smacc2::SmaccStateMachineBase<SmJeArmPcbIns
     {
       node->declare_parameter<double>("gripper_action_delay_sec", 0.0);
     }
+    if (!node->has_parameter("inspect_front_trigger_service"))
+    {
+      node->declare_parameter<std::string>("inspect_front_trigger_service", "/vision/inspect_front");
+    }
+    if (!node->has_parameter("inspect_back_trigger_service"))
+    {
+      node->declare_parameter<std::string>("inspect_back_trigger_service", "/vision/inspect_back");
+    }
 
     bool publishStaticObstacles = true;
     bool enableGripperControl = false;
     double simulatedGripperActionSec = 2.0;
     double gripperActionDelaySec = 0.0;
+    std::string inspectFrontTriggerService = "/vision/inspect_front";
+    std::string inspectBackTriggerService = "/vision/inspect_back";
 
     node->get_parameter_or("publish_static_obstacles", publishStaticObstacles, true);
     node->get_parameter_or("enable_gripper_control", enableGripperControl, false);
     node->get_parameter_or("simulated_gripper_action_sec", simulatedGripperActionSec, 2.0);
     node->get_parameter_or("gripper_action_delay_sec", gripperActionDelaySec, 0.0);
+    node->get_parameter_or("inspect_front_trigger_service", inspectFrontTriggerService, std::string("/vision/inspect_front"));
+    node->get_parameter_or("inspect_back_trigger_service", inspectBackTriggerService, std::string("/vision/inspect_back"));
 
     RCLCPP_INFO(
       log_utils::bizLogger(),
-      "[%s] SM params | publish_static_obstacles=%d enable_gripper_control=%d simulated_gripper_action_sec=%.2f gripper_action_delay_sec=%.2f",
+      "[%s] SM params | publish_static_obstacles=%d enable_gripper_control=%d simulated_gripper_action_sec=%.2f gripper_action_delay_sec=%.2f inspect_front_trigger_service=%s inspect_back_trigger_service=%s",
       log_utils::bjtNowString().c_str(),
       publishStaticObstacles,
       enableGripperControl,
       simulatedGripperActionSec,
-      gripperActionDelaySec);
+      gripperActionDelaySec,
+      inspectFrontTriggerService.c_str(),
+      inspectBackTriggerService.c_str());
 
     this->setGlobalSMData(std::string(sm_data::kResumeStateId), std::string(sm_data::kWaitResourcesState));
     this->setGlobalSMData(std::string(sm_data::kResumeFromPause), false);

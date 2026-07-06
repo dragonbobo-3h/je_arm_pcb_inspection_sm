@@ -5,6 +5,7 @@
 
 #include <cl_moveit2z/client_behaviors/cb_move_known_state.hpp>
 
+#include "je_arm_pcb_inspection_sm/components/cp_business_key_mapper.hpp"
 #include "je_arm_pcb_inspection_sm/events.hpp"
 #include "je_arm_pcb_inspection_sm/orthogonals/or_arm.hpp"
 #include "je_arm_pcb_inspection_sm/sm_data.hpp"
@@ -79,9 +80,16 @@ struct StInspectRightViewWaitAck : smacc2::SmaccState<StInspectRightViewWaitAck,
 
   void onEntry()
   {
+    CpBusinessKeyMapper * keyMapper = nullptr;
+    this->requiresComponent(keyMapper);
+    if (keyMapper != nullptr)
+    {
+      keyMapper->request_back_inspection(this->getClassName());
+    }
+
     RCLCPP_INFO(
       getLogger(),
-      "WORK::INSPECT::RIGHT_VIEW::WAIT_ACK - both arms are in the inspect posture, inspect back side and press 'n' to continue");
+      "WORK::INSPECT::RIGHT_VIEW::WAIT_ACK - both arms are in the inspect posture, attempting external ROS trigger for back-side inspection; press 'n' to continue manually if needed");
   }
 };
 

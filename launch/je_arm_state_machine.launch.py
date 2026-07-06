@@ -26,6 +26,8 @@ def generate_launch_description():
     pcb_detection_topic = LaunchConfiguration("pcb_detection_topic")
     place_slot_topic = LaunchConfiguration("place_slot_topic")
     inspect_done_topic = LaunchConfiguration("inspect_done_topic")
+    inspect_front_trigger_service = LaunchConfiguration("inspect_front_trigger_service")
+    inspect_back_trigger_service = LaunchConfiguration("inspect_back_trigger_service")
 
     runtime_env = {
         "PYTHONPATH": "",
@@ -125,6 +127,8 @@ def generate_launch_description():
                         "pcb_detection_topic": pcb_detection_topic,
                         "place_slot_topic": place_slot_topic,
                         "inspect_done_topic": inspect_done_topic,
+                        "inspect_front_trigger_service": inspect_front_trigger_service,
+                        "inspect_back_trigger_service": inspect_back_trigger_service,
                     },
                 ],
                 arguments=[
@@ -153,7 +157,7 @@ def generate_launch_description():
             ),
             DeclareLaunchArgument(
                 "enable_gripper_control",
-                default_value="true",
+                default_value="false",
                 description="Whether to send real gripper commands; false simulates each open/close action",
             ),
             DeclareLaunchArgument(
@@ -180,6 +184,16 @@ def generate_launch_description():
                 "inspect_done_topic",
                 default_value="/vision/inspect_done",
                 description="Topic for inspect-done acknowledgements",
+            ),
+            DeclareLaunchArgument(
+                "inspect_front_trigger_service",
+                default_value="/vision/inspect_front",
+                description="ROS Trigger service called when front-side inspection is ready; if unavailable, manual 'n' and inspect_done topic remain usable",
+            ),
+            DeclareLaunchArgument(
+                "inspect_back_trigger_service",
+                default_value="/vision/inspect_back",
+                description="ROS Trigger service called when back-side inspection is ready; if unavailable, manual 'n' and inspect_done topic remain usable",
             ),
             keyboard_server,
             sm_node,

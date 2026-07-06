@@ -7,6 +7,7 @@
 #include <ament_index_cpp/get_package_share_directory.hpp>
 #include <common/msg/pcb_detection.hpp>
 #include <common/msg/place_slot.hpp>
+#include <common/srv/inspect_capture.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <smacc2/smacc.hpp>
@@ -62,13 +63,27 @@ public:
             this->handleInspectDoneSignal("topic");
           }
         });
+    inspectFrontTriggerClient_ = node->create_client<common::srv::InspectCapture>(inspectFrontTriggerService_);
+    inspectBackTriggerClient_ = node->create_client<common::srv::InspectCapture>(inspectBackTriggerService_);
 
     RCLCPP_INFO(log_utils::bizLogger(), "[%s] KEY_MAPPER ready", log_utils::bjtNowString().c_str());
     RCLCPP_INFO(
       log_utils::bizLogger(),
-      "[%s] KEY_MAPPER subscribed: inspect_done='%s'",
+      "[%s] KEY_MAPPER subscribed: inspect_done='%s' inspect_front_trigger='%s' inspect_back_trigger='%s'",
       log_utils::bjtNowString().c_str(),
-      inspectDoneTopic_.c_str());
+      inspectDoneTopic_.c_str(),
+      inspectFrontTriggerService_.c_str(),
+      inspectBackTriggerService_.c_str());
+  }
+
+  void request_front_inspection(const std::string & waitStateName)
+  {
+    request_inspection(waitStateName, inspectFrontTriggerClient_, inspectFrontTriggerService_, "front");
+  }
+
+  void request_back_inspection(const std::string & waitStateName)
+  {
+    request_inspection(waitStateName, inspectBackTriggerClient_, inspectBackTriggerService_, "back");
   }
 
   void loadTopicNames(const rclcpp::Node::SharedPtr & node)
@@ -88,9 +103,21 @@ public:
       node->declare_parameter<std::string>("inspect_done_topic", "/vision/inspect_done");
     }
 
+    if (!node->has_parameter("inspect_front_trigger_service"))
+    {
+      node->declare_parameter<std::string>("inspect_front_trigger_service", "/vision/inspect_front");
+    }
+
+    if (!node->has_parameter("inspect_back_trigger_service"))
+    {
+      node->declare_parameter<std::string>("inspect_back_trigger_service", "/vision/inspect_back");
+    }
+
     pcbDetectionTopic_ = node->get_parameter("pcb_detection_topic").as_string();
     placeSlotTopic_ = node->get_parameter("place_slot_topic").as_string();
     inspectDoneTopic_ = node->get_parameter("inspect_done_topic").as_string();
+    inspectFrontTriggerService_ = node->get_parameter("inspect_front_trigger_service").as_string();
+    inspectBackTriggerService_ = node->get_parameter("inspect_back_trigger_service").as_string();
   }
 
   void onKeyPress(char key)
@@ -415,6 +442,164 @@ private:
     return false;
   }
 
+  void request_inspection(
+    const std::string & waitStateName,
+    const rclcpp::Client<common::srv::InspectCapture>::SharedPtr & client,
+    const std::string & serviceName,
+    const char * inspectPhase)
+  {
+    armedInspectWaitState_ = waitStateName;
+
+    if (inspectRequestTimer_)
+    {
+      inspectRequestTimer_->cancel();
+      inspectRequestTimer_.reset();
+    }
+
+    inspectRequestTimer_ = this->getNode()->create_wall_timer(
+      std::chrono::milliseconds(10),
+      [this, waitStateName, client, serviceName, inspectPhase]()
+      {
+        if (inspectRequestTimer_)
+        {
+          inspectRequestTimer_->cancel();
+          inspectRequestTimer_.reset();
+        }
+
+        auto * currentState = this->getStateMachine()->getCurrentState();
+        if (currentState == nullptr)
+        {
+          RCLCPP_WARN(getLogger(), "Cannot request %s inspection: current state is nullptr", inspectPhase);
+          return;
+        }
+
+        const std::string currentStateName = currentState->getClassName();
+        if (currentStateName != waitStateName)
+        {
+          RCLCPP_WARN(
+            log_utils::bizLogger(),
+            "[%s] INSPECT %s request skipped: current state=%s no longer matches armed wait state=%s",
+            log_utils::bjtNowString().c_str(),
+            inspectPhase,
+            currentStateName.c_str(),
+            waitStateName.c_str());
+          return;
+        }
+
+        if (serviceName.empty())
+        {
+          RCLCPP_WARN(
+            log_utils::bizLogger(),
+            "[%s] INSPECT %s request skipped: service name is empty, waiting for topic/manual ack in state=%s",
+            log_utils::bjtNowString().c_str(),
+            inspectPhase,
+            armedInspectWaitState_.c_str());
+          return;
+        }
+
+        if (client == nullptr)
+        {
+          RCLCPP_WARN(
+            log_utils::bizLogger(),
+            "[%s] INSPECT %s request skipped: client is null for service=%s, waiting for topic/manual ack in state=%s",
+            log_utils::bjtNowString().c_str(),
+            inspectPhase,
+            serviceName.c_str(),
+            armedInspectWaitState_.c_str());
+          return;
+        }
+
+        if (!client->service_is_ready())
+        {
+          RCLCPP_WARN(
+            log_utils::bizLogger(),
+            "[%s] INSPECT %s request skipped: service not ready (%s), waiting for topic/manual ack in state=%s",
+            log_utils::bjtNowString().c_str(),
+            inspectPhase,
+            serviceName.c_str(),
+            armedInspectWaitState_.c_str());
+          return;
+        }
+
+        auto request = std::make_shared<common::srv::InspectCapture::Request>();
+        const auto requestedState = armedInspectWaitState_;
+        client->async_send_request(
+          request,
+          [this, inspectPhase, serviceName, requestedState](rclcpp::Client<common::srv::InspectCapture>::SharedFuture future)
+          {
+            try
+            {
+              const auto response = future.get();
+              if (response != nullptr)
+              {
+                RCLCPP_INFO(
+                  log_utils::bizLogger(),
+                  "[%s] INSPECT %s response from service=%s for state=%s capture_success=%d quality_good=%d",
+                  log_utils::bjtNowString().c_str(),
+                  inspectPhase,
+                  serviceName.c_str(),
+                  requestedState.c_str(),
+                  response->capture_success,
+                  response->quality_good);
+
+                if (response->capture_success)
+                {
+                  // quality_good is advisory for now; continue once capture itself succeeded.
+                  if (!response->quality_good)
+                  {
+                    RCLCPP_WARN(
+                      log_utils::bizLogger(),
+                      "[%s] INSPECT %s capture succeeded but quality_good=false for state=%s; continuing",
+                      log_utils::bjtNowString().c_str(),
+                      inspectPhase,
+                      requestedState.c_str());
+                  }
+                  handleInspectDoneSignal("service");
+                }
+                else
+                {
+                  RCLCPP_WARN(
+                    log_utils::bizLogger(),
+                    "[%s] INSPECT %s capture failed for state=%s; waiting for retry/topic/manual ack",
+                    log_utils::bjtNowString().c_str(),
+                    inspectPhase,
+                    requestedState.c_str());
+                }
+              }
+              else
+              {
+                RCLCPP_WARN(
+                  log_utils::bizLogger(),
+                  "[%s] INSPECT %s request returned null response from service=%s for state=%s; waiting for topic/manual ack",
+                  log_utils::bjtNowString().c_str(),
+                  inspectPhase,
+                  serviceName.c_str(),
+                  requestedState.c_str());
+              }
+            }
+            catch (const std::exception & e)
+            {
+              RCLCPP_WARN(
+                log_utils::bizLogger(),
+                "[%s] INSPECT %s request failed for service=%s state=%s: %s",
+                log_utils::bjtNowString().c_str(),
+                inspectPhase,
+                serviceName.c_str(),
+                requestedState.c_str(),
+                e.what());
+            }
+          });
+
+        RCLCPP_INFO(
+          log_utils::bizLogger(),
+          "[%s] INSPECT %s request sent to service=%s while waiting in state=%s",
+          log_utils::bjtNowString().c_str(),
+          inspectPhase,
+          serviceName.c_str(),
+          requestedState.c_str());
+      });
+  }
+
   void handleInspectDoneSignal(const char * source)
   {
     auto * currentState = this->getStateMachine()->getCurrentState();
@@ -424,10 +609,14 @@ private:
     }
 
     const std::string stateName = currentState->getClassName();
-    if (
-      stateName.find("StInspectFrontPoseWaitAck") != std::string::npos ||
-      stateName.find("StInspectRightViewWaitAck") != std::string::npos)
+    if (!armedInspectWaitState_.empty() && stateName == armedInspectWaitState_)
     {
+      armedInspectWaitState_.clear();
+      if (inspectRequestTimer_)
+      {
+        inspectRequestTimer_->cancel();
+        inspectRequestTimer_.reset();
+      }
       RCLCPP_INFO(
         log_utils::bizLogger(),
         "[%s] INSPECT completion acknowledged by %s in state=%s -> post EvInspectStepAck",
@@ -589,10 +778,16 @@ private:
   std::string pcbDetectionTopic_{"/pcb_detection"};
   std::string placeSlotTopic_{"/vision/place_slot_detection"};
   std::string inspectDoneTopic_{"/vision/inspect_done"};
+  std::string inspectFrontTriggerService_{"/vision/inspect_front"};
+  std::string inspectBackTriggerService_{"/vision/inspect_back"};
   rclcpp::Publisher<common::msg::PcbDetection>::SharedPtr pcbDetectionPub_;
   rclcpp::Publisher<common::msg::PlaceSlot>::SharedPtr placeSlotPub_;
   rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr inspectDonePub_;
   rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr inspectDoneSub_;
+  rclcpp::Client<common::srv::InspectCapture>::SharedPtr inspectFrontTriggerClient_;
+  rclcpp::Client<common::srv::InspectCapture>::SharedPtr inspectBackTriggerClient_;
+  rclcpp::TimerBase::SharedPtr inspectRequestTimer_;
+  std::string armedInspectWaitState_;
   std::chrono::steady_clock::time_point lastPauseRequestTime_{};
 };
 
