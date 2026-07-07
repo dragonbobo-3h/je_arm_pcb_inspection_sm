@@ -9,53 +9,62 @@ gripper_commands:
   pick_open:
     mode: torque
     command: open
-    torque: 1.0
+    position: 0.99
+    torque: 0.25
 
   pick_close:
     mode: torque
     command: close
-    torque: 0.5
+    position: 0.18
+    torque: 0.25
 
   place_open:
     mode: torque
     command: open
-    torque: 1.0
+    position: 0.70
+    torque: 0.25
 
   place_close:
     mode: torque
     command: close
-    torque: 0.5
+    position: 0.0
+    torque: 0.25
 
   inspect_right_close:
     mode: torque
     command: close
-    torque: 0.5
+    position: 0.18
+    torque: 0.25
     left_valid: false
     right_valid: true
 
   inspect_right_open:
     mode: torque
     command: open
-    torque: 1.0
+    position: 0.95
+    torque: 0.35
     left_valid: false
     right_valid: true
 
   inspect_left_close:
     mode: torque
     command: close
-    torque: 0.5
+    position: 0.18
+    torque: 0.25
     left_valid: true
     right_valid: false
 
   inspect_left_open:
     mode: torque
     command: open
-    torque: 1.0
+    position: 0.75
+    torque: 0.25
 
   dual_close:
     mode: torque
     command: close
-    torque: 0.5
+    position: 0.0
+    torque: 0.25
     left_valid: true
     right_valid: true
     wait_for_feedback: true

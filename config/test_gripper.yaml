@@ -14,7 +14,7 @@ test_gripper:
 
   # 扭矩模式下使用，远端 piper 夹爪驱动支持 "open" / "close"
   command: "open"
-  torque: 1.0
+  torque: 0.35
   
   # 兼容旧单步配置
   left_valid: true
@@ -46,7 +46,8 @@ test_gripper:
     - name: "left_open"
       mode: "torque"
       command: "open"
-      torque: 1.0
+      position: 0.65
+      torque: 0.25
       left_valid: true
       right_valid: false
       min_duration_sec: 1.5
@@ -55,7 +56,8 @@ test_gripper:
     - name: "left_close"
       mode: "torque"
       command: "close"
-      torque: 1.0
+      position: 0.0
+      torque: 0.25
       left_valid: true
       right_valid: false
       min_duration_sec: 1.5
@@ -64,7 +66,8 @@ test_gripper:
     - name: "right_open"
       mode: "torque"
       command: "open"
-      torque: 1.0
+      position: 0.75
+      torque: 0.35
       left_valid: false
       right_valid: true
       min_duration_sec: 1.5
@@ -73,7 +76,8 @@ test_gripper:
     - name: "right_close"
       mode: "torque"
       command: "close"
-      torque: 1.0
+      position: 0.0
+      torque: 0.25
       left_valid: false
       right_valid: true
       min_duration_sec: 1.5

@@ -24,12 +24,12 @@ align_for_left_handover:
     joint14: -2.0316
     joint15: -0.1668
     joint16: -0.6481
-    joint17: 0.3704
+    joint17: -1.2
     joint21: -0.3892
     joint22: -0.1701
     joint23: -0.0051
     joint24: -1.7056
     joint25: -0.0274
     joint26: -1.2648
-    joint27: -1.7474
+    joint27: -0.17
   scaling_factor: 0.5
