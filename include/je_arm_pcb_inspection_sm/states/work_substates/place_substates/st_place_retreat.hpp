@@ -43,7 +43,7 @@ struct StPlaceCartesianUp : smacc2::SmaccState<StPlaceCartesianUp, StPlace>
     configure_orthogonal_runtime<OrArm, CbMovePlaceTargetPose>(
       [](CbMovePlaceTargetPose & bh, StPlaceCartesianUp & state)
       {
-        bh.zOffsetParam_ = 0.10;  // retreat offset
+        bh.useYamlOffset_ = true;
       });
   }
 
@@ -64,7 +64,7 @@ struct StPlaceCartesianUp : smacc2::SmaccState<StPlaceCartesianUp, StPlace>
     this->setGlobalSMData(
       std::string(sm_data::kWorkDelayNextSubstateId),
       std::string(sm_data::kWorkSubstatePlace));
-    RCLCPP_INFO(getLogger(), "WORK::PLACE::CARTESIAN_UP - moving to place pose with z + 0.10m");
+    RCLCPP_INFO(getLogger(), "WORK::PLACE::CARTESIAN_UP - moving to place pose using place_offset.yaml");
   }
 };
 

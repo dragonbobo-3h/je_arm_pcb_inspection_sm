@@ -43,7 +43,7 @@ struct StPlaceCartesianDown : smacc2::SmaccState<StPlaceCartesianDown, StPlace>
     configure_orthogonal_runtime<OrArm, CbMovePlaceTargetPose>(
       [](CbMovePlaceTargetPose & bh, StPlaceCartesianDown & state)
       {
-        bh.zOffsetParam_ = 0.0;  // no offset for place
+        bh.useYamlOffset_ = false;
       });
   }
 

@@ -37,6 +37,17 @@ public:
         {
           latestPcbPose_ = msg->pose;
           hasValidPcbPose_ = true;
+          RCLCPP_INFO(
+            getLogger(),
+            "[CpTopLevelFlow] Received PICK target from topic: frame=%s pos=(%.4f, %.4f, %.4f) quat=(%.4f, %.4f, %.4f, %.4f)",
+            latestPcbPose_.header.frame_id.c_str(),
+            latestPcbPose_.pose.position.x,
+            latestPcbPose_.pose.position.y,
+            latestPcbPose_.pose.position.z,
+            latestPcbPose_.pose.orientation.x,
+            latestPcbPose_.pose.orientation.y,
+            latestPcbPose_.pose.orientation.z,
+            latestPcbPose_.pose.orientation.w);
         }
         else
         {
@@ -55,6 +66,17 @@ public:
         {
           latestPlacePose_ = msg->pose;
           hasFreePlaceSlot_ = true;
+          RCLCPP_INFO(
+            getLogger(),
+            "[CpTopLevelFlow] Received PLACE target from topic: frame=%s pos=(%.4f, %.4f, %.4f) quat=(%.4f, %.4f, %.4f, %.4f)",
+            latestPlacePose_.header.frame_id.c_str(),
+            latestPlacePose_.pose.position.x,
+            latestPlacePose_.pose.position.y,
+            latestPlacePose_.pose.position.z,
+            latestPlacePose_.pose.orientation.x,
+            latestPlacePose_.pose.orientation.y,
+            latestPlacePose_.pose.orientation.z,
+            latestPlacePose_.pose.orientation.w);
         }
         else
         {

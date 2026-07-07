@@ -18,7 +18,7 @@ namespace place_substates
 class CbMovePlaceTargetPose : public cl_moveit2z::CbMoveEndEffectorLinearSeeded
 {
 public:
-  CbMovePlaceTargetPose(double zOffset = 0.0) : zOffsetParam_(zOffset)
+  CbMovePlaceTargetPose(bool useYamlOffset = false) : useYamlOffset_(useYamlOffset)
   {
     tip_link_ = "Link17";
   }
@@ -45,24 +45,28 @@ public:
     stateMachine->getGlobalSMData(std::string(sm_data::kPlaceTargetQz), pose.pose.orientation.z);
     stateMachine->getGlobalSMData(std::string(sm_data::kPlaceTargetQw), pose.pose.orientation.w);
 
+    std::string offsetPath;
+
     double offsetX = 0.0;
     double offsetY = 0.0;
     double offsetZ = 0.0;
-    std::string offsetPath;
     const bool offsetLoaded =
+      useYamlOffset_ &&
       je_arm_pcb_inspection_sm::utils::loadPlaceOffset(offsetX, offsetY, offsetZ, offsetPath);
 
-    pose.pose.position.x += offsetX;
-    pose.pose.position.y += offsetY;
-    pose.pose.position.z += offsetZ;
-    // Apply state-specific z offset AFTER blackboard and yaml overrides so it is not discarded
-    pose.pose.position.z += zOffsetParam_;
+    if (useYamlOffset_)
+    {
+      pose.pose.position.x += offsetX;
+      pose.pose.position.y += offsetY;
+      pose.pose.position.z += offsetZ;
+    }
+
     targetPose = pose;
 
     RCLCPP_INFO(
       getLogger(),
-      "[CbMovePlaceTargetPose] target (z_offset: %.4f, place_offset: %.4f, %.4f, %.4f, file=%s) -> frame=%s pos=(%.4f, %.4f, %.4f) quat=(%.4f, %.4f, %.4f, %.4f)",
-      zOffsetParam_,
+      "[CbMovePlaceTargetPose] target (use_yaml_offset=%s, place_offset: %.4f, %.4f, %.4f, file=%s) -> frame=%s pos=(%.4f, %.4f, %.4f) quat=(%.4f, %.4f, %.4f, %.4f)",
+      useYamlOffset_ ? "true" : "false",
       offsetX,
       offsetY,
       offsetZ,
@@ -79,7 +83,7 @@ public:
     CbMoveEndEffectorLinearSeeded::onEntry();
   }
 
-  double zOffsetParam_ = 0.0;
+  bool useYamlOffset_ = false;
 };
 
 }  // namespace place_substates

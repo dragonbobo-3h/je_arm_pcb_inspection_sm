@@ -43,7 +43,7 @@ struct StPlaceLPregrasp : smacc2::SmaccState<StPlaceLPregrasp, StPlace>
     configure_orthogonal_runtime<OrArm, CbMovePlaceTargetPose>(
       [](CbMovePlaceTargetPose & bh, StPlaceLPregrasp & state)
       {
-        bh.zOffsetParam_ = 0.10;  // pregrasp offset
+        bh.useYamlOffset_ = true;
       });
   }
 
@@ -64,7 +64,7 @@ struct StPlaceLPregrasp : smacc2::SmaccState<StPlaceLPregrasp, StPlace>
     this->setGlobalSMData(
       std::string(sm_data::kWorkDelayNextSubstateId),
       std::string(sm_data::kWorkSubstatePlace));
-    RCLCPP_INFO(getLogger(), "WORK::PLACE::L_PREGRASP - moving to place pose with z + 0.10m");
+    RCLCPP_INFO(getLogger(), "WORK::PLACE::L_PREGRASP - moving to place pose using place_offset.yaml");
   }
 };
 

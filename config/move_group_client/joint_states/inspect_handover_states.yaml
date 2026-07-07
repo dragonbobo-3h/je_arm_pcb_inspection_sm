@@ -1,12 +1,12 @@
 align_for_right_handover:
   joint_states:
-    joint11: -0.3739
-    joint12: -0.6382
-    joint13: -0.0837
-    joint14: -2.0612
-    joint15: -0.2025
-    joint16: -0.4819
-    joint17: 0.4131
+    joint11: -0.4019
+    joint12: -0.5018
+    joint13: 0.1211
+    joint14: -2.0316
+    joint15: -0.1668
+    joint16: -0.6481
+    joint17: 0.3704
     joint21: -0.3892
     joint22: -0.1701
     joint23: -0.0051
@@ -18,13 +18,13 @@ align_for_right_handover:
 
 align_for_left_handover:
   joint_states:
-    joint11: -0.3739
-    joint12: -0.6382
-    joint13: -0.0837
-    joint14: -2.0612
-    joint15: -0.2025
-    joint16: -0.4819
-    joint17: 0.4131
+    joint11: -0.4019
+    joint12: -0.5018
+    joint13: 0.1211
+    joint14: -2.0316
+    joint15: -0.1668
+    joint16: -0.6481
+    joint17: 0.3704
     joint21: -0.3892
     joint22: -0.1701
     joint23: -0.0051

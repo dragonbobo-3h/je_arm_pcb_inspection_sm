@@ -130,6 +130,17 @@ struct StWaitResources : smacc2::SmaccState<StWaitResources, SmJeArmPcbInspectio
       simulated_gripper_action_sec_,
       gripper_action_delay_sec_);
 
+    if (shouldSkipDualCloseInThisCycle())
+    {
+      gripperCloseConfirmed_ = true;
+      gripperCloseConfirmedTime_ = enteredTime_;
+      RCLCPP_INFO(
+        log_utils::bizLogger(),
+        "[%s] WAIT_RESOURCES skip dual-close confirmation for pending_work_substate=%s",
+        log_utils::bjtNowString().c_str(),
+        pendingWorkSubstate_.c_str());
+    }
+
     const auto gripperCfg = je_arm_pcb_inspection_sm::utils::loadGripperCommandConfig("dual_close");
     gripperCloseConfig_ = gripperCfg;
 
@@ -142,14 +153,14 @@ struct StWaitResources : smacc2::SmaccState<StWaitResources, SmJeArmPcbInspectio
         getEffectiveGripperDelaySec());
     }
 
-    if (enable_gripper_control_ && !gripperPublisher_)
+    if (enable_gripper_control_ && !shouldSkipDualCloseInThisCycle() && !gripperPublisher_)
     {
       gripperPublisher_ = node->create_publisher<je_software::msg::EndEffectorCommandLR>(
         gripperCloseConfig_.topic,
         rclcpp::QoS(10).reliable());
     }
 
-    if (enable_gripper_control_ && !gripperFeedbackSub_)
+    if (enable_gripper_control_ && !shouldSkipDualCloseInThisCycle() && !gripperFeedbackSub_)
     {
       gripperFeedbackSub_ = node->create_subscription<common::msg::OculusInitJointState>(
         "/joint_states_double_arm",
@@ -160,7 +171,7 @@ struct StWaitResources : smacc2::SmaccState<StWaitResources, SmJeArmPcbInspectio
         });
     }
 
-    if (enable_gripper_control_)
+    if (enable_gripper_control_ && !shouldSkipDualCloseInThisCycle())
     {
       publishDualCloseCommand();
       if (!gripperCloseConfig_.waitForFeedback)
@@ -268,6 +279,11 @@ private:
   static constexpr double kGripperPositionClosed = 0.0;
   static constexpr double kGripperPositionTolerance = 0.03;
   static constexpr double kGripperCloseTimeoutSec = 2.0;
+
+  bool shouldSkipDualCloseInThisCycle() const
+  {
+    return pendingWorkSubstate_ == sm_data::kWorkSubstatePlace;
+  }
 
   double getEffectiveGripperDelaySec() const
   {
