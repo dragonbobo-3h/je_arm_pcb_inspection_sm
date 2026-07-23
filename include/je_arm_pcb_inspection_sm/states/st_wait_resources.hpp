@@ -143,6 +143,11 @@ struct StWaitResources : smacc2::SmaccState<StWaitResources, SmJeArmPcbInspectio
 
     const auto gripperCfg = je_arm_pcb_inspection_sm::utils::loadGripperCommandConfig("dual_close");
     gripperCloseConfig_ = gripperCfg;
+    RCLCPP_INFO(
+      log_utils::bizLogger(),
+      "[%s] WAIT_RESOURCES loaded dual_close gripper command delay_sec=%.2f",
+      log_utils::bjtNowString().c_str(),
+      gripperCloseConfig_.delaySec);
 
     if (!enable_gripper_control_)
     {
@@ -287,6 +292,11 @@ private:
 
   double getEffectiveGripperDelaySec() const
   {
+    if (gripperCloseConfig_.delaySec >= 0.0)
+    {
+      return gripperCloseConfig_.delaySec;
+    }
+
     if (gripper_action_delay_sec_ > 0.0)
     {
       return gripper_action_delay_sec_;

@@ -40,7 +40,8 @@ struct StInspectRightGripperOpenReceive : smacc2::SmaccState<StInspectRightGripp
     const auto cfg = je_arm_pcb_inspection_sm::utils::loadGripperCommandConfig("inspect_right_open");
     configure_orthogonal<OrGripper, cl_moveit2z::CbCtrlGripper>(
       cfg.mode, cfg.position, cfg.preset, cfg.leftValid, cfg.rightValid, cfg.topic, 1.5,
-      "/joint_states_double_arm", 0.03, cfg.command, cfg.torque, cfg.waitForFeedback);
+      "/joint_states_double_arm", 0.03, cfg.command, cfg.torque, cfg.waitForFeedback,
+      cfg.delaySec);
   }
 
   void onEntry()

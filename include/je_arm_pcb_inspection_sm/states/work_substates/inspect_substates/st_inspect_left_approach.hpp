@@ -47,7 +47,7 @@ struct StInspectLeftApproach : smacc2::SmaccState<StInspectLeftApproach, StInspe
     this->setGlobalSMData(std::string(sm_data::kResumeStateId), std::string(sm_data::kWorkState));
     this->setGlobalSMData(std::string(sm_data::kWorkResumeSubstateId), std::string(sm_data::kWorkSubstateInspect));
     this->setGlobalSMData(std::string(sm_data::kWorkDelayNextSubstateId), std::string(sm_data::kWorkSubstateInspect));
-    RCLCPP_INFO(getLogger(), "WORK::INSPECT::LEFT_APPROACH - pose-planned left arm handover approach [n bypass]");
+    RCLCPP_INFO(getLogger(), "WORK::INSPECT::LEFT_APPROACH - cartesian linear left arm handover approach [n bypass]");
   }
 };
 

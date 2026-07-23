@@ -11,30 +11,35 @@ gripper_commands:
     command: open
     position: 0.99
     torque: 0.25
+    delay_sec: 0.0
 
   pick_close:
     mode: torque
     command: close
     position: 0.18
     torque: 0.25
+    delay_sec: 0.0
 
   place_open:
     mode: torque
     command: open
     position: 0.70
     torque: 0.25
+    delay_sec: 0.0
 
   place_close:
     mode: torque
     command: close
     position: 0.0
     torque: 0.25
+    delay_sec: 0.0
 
   inspect_right_close:
     mode: torque
     command: close
     position: 0.18
-    torque: 0.25
+    torque: 0.35
+    delay_sec: 0.5
     left_valid: false
     right_valid: true
 
@@ -43,6 +48,7 @@ gripper_commands:
     command: open
     position: 0.95
     torque: 0.35
+    delay_sec: 0.0
     left_valid: false
     right_valid: true
 
@@ -50,21 +56,24 @@ gripper_commands:
     mode: torque
     command: close
     position: 0.18
-    torque: 0.25
+    torque: 0.35
+    delay_sec: 0.5
     left_valid: true
     right_valid: false
 
   inspect_left_open:
     mode: torque
     command: open
-    position: 0.75
-    torque: 0.25
+    position: 0.95
+    torque: 0.35
+    delay_sec: 0.0
 
   dual_close:
     mode: torque
     command: close
     position: 0.0
-    torque: 0.25
+    torque: 0.35
+    delay_sec: 0.3
     left_valid: true
     right_valid: true
     wait_for_feedback: true

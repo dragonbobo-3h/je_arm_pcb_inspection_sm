@@ -1,11 +1,11 @@
 right_receive:
   x: 0.00
-  y: -0.135
+  y: -0.13
   z: 0.00
 
 left_receive:
   x: 0.00
-  y: 0.14
+  y: 0.165
   z: 0.00
 
 right_retreat:

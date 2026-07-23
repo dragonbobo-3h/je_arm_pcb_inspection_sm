@@ -49,7 +49,8 @@ struct StPlaceGripperClose : smacc2::SmaccState<StPlaceGripperClose, StPlace>
       0.03,
       cfg.command,
       cfg.torque,
-      cfg.waitForFeedback);
+      cfg.waitForFeedback,
+      cfg.delaySec);
   }
 
   void onEntry()

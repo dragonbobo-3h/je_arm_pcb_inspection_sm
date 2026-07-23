@@ -77,7 +77,7 @@ struct StInspectResumeRouter : smacc2::SmaccState<StInspectResumeRouter, StInspe
     }
     else if (substate == sm_data::kInspectSubstateRightBothGrippersClose)
     {
-      this->template postEvent<EvInspectResumeToRightBothGrippersClose>();
+      this->template postEvent<EvInspectResumeToRightGripperOpenReceive>();
     }
     else if (substate == sm_data::kInspectSubstateRightGripperOpenReceive)
     {
@@ -109,7 +109,7 @@ struct StInspectResumeRouter : smacc2::SmaccState<StInspectResumeRouter, StInspe
     }
     else if (substate == sm_data::kInspectSubstateLeftBothGrippersClose)
     {
-      this->template postEvent<EvInspectResumeToLeftBothGrippersClose>();
+      this->template postEvent<EvInspectResumeToLeftGripperOpenReceive>();
     }
     else if (substate == sm_data::kInspectSubstateLeftGripperOpenReceive)
     {

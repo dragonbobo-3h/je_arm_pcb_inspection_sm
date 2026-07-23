@@ -50,7 +50,8 @@ struct StGripperClose : smacc2::SmaccState<StGripperClose, StPick>
       0.03,
       cfg.command,
       cfg.torque,
-      cfg.waitForFeedback);
+      cfg.waitForFeedback,
+      cfg.delaySec);
   }
 
   void onEntry()

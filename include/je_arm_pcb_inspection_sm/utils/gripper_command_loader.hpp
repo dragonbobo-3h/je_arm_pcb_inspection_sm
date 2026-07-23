@@ -23,6 +23,7 @@ struct GripperCommandConfig
   bool leftValid{true};
   bool rightValid{false};
   bool waitForFeedback{true};
+  double delaySec{-1.0};
   std::string topic{"/end_effector_cmd_lr"};
   std::string sourcePath;
   bool loaded{false};
@@ -111,6 +112,14 @@ inline GripperCommandConfig loadGripperCommandConfig(const std::string & command
       {
         cfg.waitForFeedback = common["wait_for_feedback"].as<bool>();
       }
+      if (common["delay_sec"])
+      {
+        cfg.delaySec = common["delay_sec"].as<double>();
+      }
+      if (common["action_delay_sec"])
+      {
+        cfg.delaySec = common["action_delay_sec"].as<double>();
+      }
     }
 
     if (command)
@@ -147,6 +156,14 @@ inline GripperCommandConfig loadGripperCommandConfig(const std::string & command
       if (command["wait_for_feedback"])
       {
         cfg.waitForFeedback = command["wait_for_feedback"].as<bool>();
+      }
+      if (command["delay_sec"])
+      {
+        cfg.delaySec = command["delay_sec"].as<double>();
+      }
+      if (command["action_delay_sec"])
+      {
+        cfg.delaySec = command["action_delay_sec"].as<double>();
       }
     }
 
