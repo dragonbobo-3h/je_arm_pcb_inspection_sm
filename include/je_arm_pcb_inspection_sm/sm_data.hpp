@@ -9,6 +9,7 @@ namespace sm_data
 inline constexpr const char * kResumeStateId = "resume_state_id";
 inline constexpr const char * kActivateState = "ACTIVATE";
 inline constexpr const char * kWaitResourcesState = "WAIT_RESOURCES";
+inline constexpr const char * kTestGripperState = "TEST_GRIPPER";
 inline constexpr const char * kWorkState = "WORK";
 inline constexpr const char * kBackState = "BACK";
 inline constexpr const char * kBackToIdleState = "BACK_TO_IDLE";
@@ -41,6 +42,7 @@ inline constexpr const char * kPickSubstateCartesianDown = "PICK_CARTESIAN_DOWN"
 inline constexpr const char * kPickSubstateGripperClose = "PICK_GRIPPER_CLOSE";
 inline constexpr const char * kPickSubstateCartesianUp = "PICK_CARTESIAN_UP";
 inline constexpr const char * kPickSubstateLRetreat = "PICK_L_RETREAT";
+inline constexpr const char * kPickSubstateGraspCheck = "PICK_GRASP_CHECK";
 inline constexpr const char * kPickDelayNextSubstateId = "pick_delay_next_substate_id";
 
 inline constexpr const char * kInspectResumeFromPause = "inspect_resume_from_pause";

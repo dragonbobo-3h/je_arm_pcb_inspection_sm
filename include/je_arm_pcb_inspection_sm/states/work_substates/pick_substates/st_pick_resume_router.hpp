@@ -11,6 +11,7 @@
 #include "je_arm_pcb_inspection_sm/states/work_substates/pick_substates/st_gripper_close.hpp"
 #include "je_arm_pcb_inspection_sm/states/work_substates/pick_substates/st_cartesian_up.hpp"
 #include "je_arm_pcb_inspection_sm/states/work_substates/pick_substates/st_l_retreat.hpp"
+#include "je_arm_pcb_inspection_sm/states/work_substates/pick_substates/st_grasp_check.hpp"
 #include "je_arm_pcb_inspection_sm/utils/logging.hpp"
 
 namespace je_arm_pcb_inspection_sm
@@ -30,6 +31,7 @@ struct StCartesianDown;
 struct StGripperClose;
 struct StCartesianUp;
 struct StLRetreat;
+struct StGraspCheck;
 
 struct StPickResumeRouter : smacc2::SmaccState<StPickResumeRouter, StPick>
 {
@@ -41,7 +43,8 @@ struct StPickResumeRouter : smacc2::SmaccState<StPickResumeRouter, StPick>
     smacc2::Transition<EvPickResumeToCartesianDown, StCartesianDown>,
     smacc2::Transition<EvPickResumeToGripperClose, StGripperClose>,
     smacc2::Transition<EvPickResumeToCartesianUp, StCartesianUp>,
-    smacc2::Transition<EvPickResumeToLRetreat, StLRetreat>
+    smacc2::Transition<EvPickResumeToLRetreat, StLRetreat>,
+    smacc2::Transition<EvPickResumeToGraspCheck, StGraspCheck>
   > reactions;
 
   void onEntry()
@@ -77,6 +80,10 @@ struct StPickResumeRouter : smacc2::SmaccState<StPickResumeRouter, StPick>
     else if (substate == sm_data::kPickSubstateLRetreat)
     {
       this->template postEvent<EvPickResumeToLRetreat>();
+    }
+    else if (substate == sm_data::kPickSubstateGraspCheck)
+    {
+      this->template postEvent<EvPickResumeToGraspCheck>();
     }
     else
     {

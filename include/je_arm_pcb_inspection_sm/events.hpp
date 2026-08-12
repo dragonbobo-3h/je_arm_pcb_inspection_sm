@@ -46,6 +46,7 @@ struct EvFaultToBack : sc::event<EvFaultToBack> {};
 
 // PAUSE 恢复路由中间事件
 struct EvResumeToWaitResources : sc::event<EvResumeToWaitResources> {};
+struct EvResumeToTestGripper : sc::event<EvResumeToTestGripper> {};
 struct EvResumeToWork : sc::event<EvResumeToWork> {};
 struct EvResumeToBack : sc::event<EvResumeToBack> {};
 struct EvResumeToActivate : sc::event<EvResumeToActivate> {};
@@ -71,6 +72,7 @@ struct EvGripperOpened : sc::event<EvGripperOpened> {};
 struct EvAtGraspDepth : sc::event<EvAtGraspDepth> {};
 struct EvGripperClosed : sc::event<EvGripperClosed> {};
 struct EvLifted : sc::event<EvLifted> {};
+struct EvPickRetry : sc::event<EvPickRetry> {};
 
 // WORK 内部恢复路由事件
 struct EvWorkResumeToPick : sc::event<EvWorkResumeToPick> {};
@@ -106,6 +108,7 @@ struct EvPickResumeToCartesianDown : sc::event<EvPickResumeToCartesianDown> {};
 struct EvPickResumeToGripperClose : sc::event<EvPickResumeToGripperClose> {};
 struct EvPickResumeToCartesianUp : sc::event<EvPickResumeToCartesianUp> {};
 struct EvPickResumeToLRetreat : sc::event<EvPickResumeToLRetreat> {};
+struct EvPickResumeToGraspCheck : sc::event<EvPickResumeToGraspCheck> {};
 
 // PLACE 内部恢复路由事件
 struct EvPlaceResumeToPre : sc::event<EvPlaceResumeToPre> {};

@@ -197,6 +197,12 @@ public:
       return;
     }
 
+    if (stateName.find("StTestGripper") != std::string::npos)
+    {
+      (void)tryPostPauseRequested(true);
+      return;
+    }
+
     if (stateName.find("StWaitResources") != std::string::npos)
     {
       if (normalizedKey == 'w')

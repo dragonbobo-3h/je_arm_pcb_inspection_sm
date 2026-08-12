@@ -37,6 +37,9 @@ struct StTestGripper : smacc2::SmaccState<StTestGripper, SmJeArmPcbInspection>
 
   void onEntry()
   {
+    this->setGlobalSMData(
+      std::string(sm_data::kResumeStateId),
+      std::string(sm_data::kTestGripperState));
     config_ = je_arm_pcb_inspection_sm::utils::loadTestGripperConfig();
     current_step_index_ = 0;
     step_completed_ = false;

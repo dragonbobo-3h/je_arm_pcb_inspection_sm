@@ -28,6 +28,7 @@ struct StPick : smacc2::SmaccState<StPick, StWork, pick_substates::StPickResumeR
 
   typedef boost::mpl::list<
     smacc2::Transition<EvPickDone, StInspect>,
+    smacc2::Transition<EvPickRetry, StPick>,
     smacc2::Transition<EvPauseRequested, StPause>
   > reactions;
 
@@ -64,3 +65,4 @@ struct StPick : smacc2::SmaccState<StPick, StWork, pick_substates::StPickResumeR
 #include "je_arm_pcb_inspection_sm/states/work_substates/pick_substates/st_gripper_close.hpp"
 #include "je_arm_pcb_inspection_sm/states/work_substates/pick_substates/st_cartesian_up.hpp"
 #include "je_arm_pcb_inspection_sm/states/work_substates/pick_substates/st_l_retreat.hpp"
+#include "je_arm_pcb_inspection_sm/states/work_substates/pick_substates/st_grasp_check.hpp"

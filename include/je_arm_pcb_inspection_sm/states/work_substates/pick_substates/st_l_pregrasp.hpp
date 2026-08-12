@@ -66,6 +66,21 @@ public:
     pose.pose.position.z += offsetZ;
     targetPose = pose;
 
+    this->requiresClient(movegroupClient_);
+    auto & moveGroup = *(movegroupClient_->moveGroupClientInterface);
+    moveGroup.startStateMonitor(1.0);
+    const auto currentState = moveGroup.getCurrentState(1.0);
+    if (currentState)
+    {
+      moveGroup.setStartState(*currentState);
+    }
+    else
+    {
+      RCLCPP_WARN(
+        getLogger(),
+        "[CbMovePcbTargetPose] MoveIt current state unavailable before pregrasp planning");
+    }
+
     RCLCPP_INFO(
       getLogger(),
       "[CbMovePcbTargetPose] PREGRASP target (pick_offset: %.4f, %.4f, %.4f, file=%s) -> frame=%s pos=(%.4f, %.4f, %.4f) quat=(%.4f, %.4f, %.4f, %.4f)",

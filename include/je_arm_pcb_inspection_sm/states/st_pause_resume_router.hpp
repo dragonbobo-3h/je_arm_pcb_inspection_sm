@@ -13,6 +13,7 @@ struct SmJeArmPcbInspection;
 
 struct StActivate;
 struct StWaitResources;
+struct StTestGripper;
 struct StWork;
 struct StBack;
 struct StBackToIdle;
@@ -25,6 +26,7 @@ struct StPauseResumeRouter : smacc2::SmaccState<StPauseResumeRouter, SmJeArmPcbI
   typedef boost::mpl::list<
     smacc2::Transition<EvResumeToActivate, StActivate>,
     smacc2::Transition<EvResumeToWaitResources, StWaitResources>,
+    smacc2::Transition<EvResumeToTestGripper, StTestGripper>,
     smacc2::Transition<EvResumeToWork, StWork>,
     smacc2::Transition<EvResumeToBack, StBack>,
     smacc2::Transition<EvResumeToBackToIdle, StBackToIdle>
@@ -45,6 +47,10 @@ struct StPauseResumeRouter : smacc2::SmaccState<StPauseResumeRouter, SmJeArmPcbI
     {
       this->setGlobalSMData(std::string(sm_data::kActivateResumeFromPause), true);
       this->template postEvent<EvResumeToActivate>();
+    }
+    else if (resumeState == sm_data::kTestGripperState)
+    {
+      this->template postEvent<EvResumeToTestGripper>();
     }
     else if (resumeState == sm_data::kWorkState)
     {

@@ -98,7 +98,10 @@ struct StLRetreat : smacc2::SmaccState<StLRetreat, StPick>
       std::string(sm_data::kPickSubstateLRetreat));
     this->setGlobalSMData(
       std::string(sm_data::kWorkDelayNextSubstateId),
-      std::string(sm_data::kWorkSubstateInspect));
+      std::string(sm_data::kWorkSubstatePick));
+    this->setGlobalSMData(
+      std::string(sm_data::kPickDelayNextSubstateId),
+      std::string(sm_data::kPickSubstateGraspCheck));
     this->setGlobalSMData(
       std::string(sm_data::kResumeStateId),
       std::string(sm_data::kWorkState));
