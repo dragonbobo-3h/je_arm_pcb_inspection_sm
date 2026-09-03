@@ -87,6 +87,10 @@ struct SmJeArmPcbInspection : public smacc2::SmaccStateMachineBase<SmJeArmPcbIns
     {
       node->declare_parameter<std::string>("inspect_back_trigger_service", "/vision/inspect_back");
     }
+    if (!node->has_parameter("skip_inspect_handover"))
+    {
+      node->declare_parameter<bool>("skip_inspect_handover", false);
+    }
 
     bool publishStaticObstacles = true;
     bool enableGripperControl = false;
@@ -94,6 +98,7 @@ struct SmJeArmPcbInspection : public smacc2::SmaccStateMachineBase<SmJeArmPcbIns
     double gripperActionDelaySec = 0.0;
     std::string inspectFrontTriggerService = "/vision/inspect_front";
     std::string inspectBackTriggerService = "/vision/inspect_back";
+    bool skipInspectHandover = false;
 
     node->get_parameter_or("publish_static_obstacles", publishStaticObstacles, true);
     node->get_parameter_or("enable_gripper_control", enableGripperControl, false);
@@ -101,17 +106,19 @@ struct SmJeArmPcbInspection : public smacc2::SmaccStateMachineBase<SmJeArmPcbIns
     node->get_parameter_or("gripper_action_delay_sec", gripperActionDelaySec, 0.0);
     node->get_parameter_or("inspect_front_trigger_service", inspectFrontTriggerService, std::string("/vision/inspect_front"));
     node->get_parameter_or("inspect_back_trigger_service", inspectBackTriggerService, std::string("/vision/inspect_back"));
+    node->get_parameter_or("skip_inspect_handover", skipInspectHandover, false);
 
     RCLCPP_INFO(
       log_utils::bizLogger(),
-      "[%s] SM params | publish_static_obstacles=%d enable_gripper_control=%d simulated_gripper_action_sec=%.2f gripper_action_delay_sec=%.2f inspect_front_trigger_service=%s inspect_back_trigger_service=%s",
+      "[%s] SM params | publish_static_obstacles=%d enable_gripper_control=%d simulated_gripper_action_sec=%.2f gripper_action_delay_sec=%.2f inspect_front_trigger_service=%s inspect_back_trigger_service=%s skip_inspect_handover=%d",
       log_utils::bjtNowString().c_str(),
       publishStaticObstacles,
       enableGripperControl,
       simulatedGripperActionSec,
       gripperActionDelaySec,
       inspectFrontTriggerService.c_str(),
-      inspectBackTriggerService.c_str());
+      inspectBackTriggerService.c_str(),
+      skipInspectHandover);
 
     this->setGlobalSMData(std::string(sm_data::kResumeStateId), std::string(sm_data::kWaitResourcesState));
     this->setGlobalSMData(std::string(sm_data::kResumeFromPause), false);
@@ -126,6 +133,7 @@ struct SmJeArmPcbInspection : public smacc2::SmaccStateMachineBase<SmJeArmPcbIns
     this->setGlobalSMData(std::string(sm_data::kWorkResumeSubstateId), std::string(sm_data::kWorkSubstatePick));
     this->setGlobalSMData(std::string(sm_data::kWorkDelayNextSubstateId), std::string(sm_data::kWorkSubstatePick));
     this->setGlobalSMData(std::string(sm_data::kPickResumeFromPause), false);
+    this->setGlobalSMData(std::string(sm_data::kSkipInspectHandover), skipInspectHandover);
     this->setGlobalSMData(std::string(sm_data::kPickResumeSubstateId), std::string(sm_data::kPickSubstateLPregrasp));
     this->setGlobalSMData(std::string(sm_data::kPickDelayNextSubstateId), std::string(sm_data::kPickSubstateGripperOpen));
     this->setGlobalSMData(std::string(sm_data::kPlaceResumeFromPause), false);

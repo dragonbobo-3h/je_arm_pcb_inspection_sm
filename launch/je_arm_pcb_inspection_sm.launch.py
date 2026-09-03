@@ -11,6 +11,7 @@ def generate_launch_description():
     start_control_stack = LaunchConfiguration("start_control_stack")
     start_state_machine = LaunchConfiguration("start_state_machine")
     use_fake_executor = LaunchConfiguration("use_fake_executor")
+    skip_inspect_handover = LaunchConfiguration("skip_inspect_handover")
 
     this_pkg_share = get_package_share_directory("je_arm_pcb_inspection_sm")
     moveit_pkg_share = get_package_share_directory("my_jearm_moveit_config")
@@ -36,6 +37,7 @@ def generate_launch_description():
     state_machine = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(state_machine_launch),
         condition=IfCondition(start_state_machine),
+        launch_arguments={"skip_inspect_handover": skip_inspect_handover}.items(),
     )
 
     return LaunchDescription(
@@ -54,6 +56,11 @@ def generate_launch_description():
                 "use_fake_executor",
                 default_value="true",
                 description="Start fake trajectory executor (set true for simulation without ros2_control)",
+            ),
+            DeclareLaunchArgument(
+                "skip_inspect_handover",
+                default_value="false",
+                description="After front-side inspection, skip handovers and continue directly to placement",
             ),
             SetEnvironmentVariable(
                 name="LD_LIBRARY_PATH",

@@ -65,6 +65,8 @@ struct EvActivateResumeToP2 : sc::event<EvActivateResumeToP2> {};
 struct EvPickDone : sc::event<EvPickDone> {};
 struct EvInspectStepAck : sc::event<EvInspectStepAck> {};
 struct EvPlaceDone : sc::event<EvPlaceDone> {};
+struct EvInspectContinueToHandover : sc::event<EvInspectContinueToHandover> {};
+struct EvInspectContinueToPlace : sc::event<EvInspectContinueToPlace> {};
 
 // PICK 内部阶段事件
 struct EvAtPregrasp : sc::event<EvAtPregrasp> {};

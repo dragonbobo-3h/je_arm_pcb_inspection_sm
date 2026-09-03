@@ -47,6 +47,7 @@ inline constexpr const char * kPickDelayNextSubstateId = "pick_delay_next_substa
 
 inline constexpr const char * kInspectResumeFromPause = "inspect_resume_from_pause";
 inline constexpr const char * kInspectResumeSubstateId = "inspect_resume_substate_id";
+inline constexpr const char * kSkipInspectHandover = "skip_inspect_handover";
 inline constexpr const char * kInspectSubstateFrontPose = "INSPECT_FRONT_POSE";
 inline constexpr const char * kInspectSubstateAlignForRightHandover = "INSPECT_ALIGN_FOR_RIGHT_HANDOVER";
 inline constexpr const char * kInspectSubstateRightBothGrippersClose = "INSPECT_RIGHT_BOTH_GRIPPERS_CLOSE";

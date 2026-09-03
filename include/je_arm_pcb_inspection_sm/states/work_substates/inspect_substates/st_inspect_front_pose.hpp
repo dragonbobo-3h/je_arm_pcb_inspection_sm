@@ -26,13 +26,15 @@ namespace inspect_substates
 struct StInspectFrontPoseMove;
 struct StInspectFrontPoseWaitAck;
 struct StInspectAlignForRightHandover;
+struct StInspectReturnWaitPose;
+struct StInspectPostFrontRouter;
 
 struct StInspectFrontPose : smacc2::SmaccState<StInspectFrontPose, StInspect, StInspectFrontPoseMove>
 {
   using SmaccState::SmaccState;
 
   typedef boost::mpl::list<
-    smacc2::Transition<EvInspectStepAck, StInspectAlignForRightHandover>,
+    smacc2::Transition<EvInspectStepAck, StInspectPostFrontRouter>,
     smacc2::Transition<EvPauseRequested, StPause>
   > reactions;
 
@@ -44,6 +46,32 @@ struct StInspectFrontPose : smacc2::SmaccState<StInspectFrontPose, StInspect, St
     this->setGlobalSMData(std::string(sm_data::kWorkResumeSubstateId), std::string(sm_data::kWorkSubstateInspect));
     this->setGlobalSMData(std::string(sm_data::kWorkDelayNextSubstateId), std::string(sm_data::kWorkSubstateInspect));
     RCLCPP_INFO(getLogger(), "WORK::INSPECT::FRONT_POSE - move to front inspect pose, inspect front side, then press 'n' to continue");
+  }
+};
+
+struct StInspectPostFrontRouter : smacc2::SmaccState<StInspectPostFrontRouter, StInspect>
+{
+  using SmaccState::SmaccState;
+
+  typedef boost::mpl::list<
+    smacc2::Transition<EvInspectContinueToHandover, StInspectAlignForRightHandover>,
+    smacc2::Transition<EvInspectContinueToPlace, StInspectReturnWaitPose>
+  > reactions;
+
+  void onEntry()
+  {
+    bool skipInspectHandover = false;
+    this->getGlobalSMData(std::string(sm_data::kSkipInspectHandover), skipInspectHandover);
+
+    if (skipInspectHandover)
+    {
+      RCLCPP_INFO(getLogger(), "WORK::INSPECT - front inspection complete; skipping handovers and continuing to placement");
+      this->template postEvent<EvInspectContinueToPlace>();
+    }
+    else
+    {
+      this->template postEvent<EvInspectContinueToHandover>();
+    }
   }
 };
 
