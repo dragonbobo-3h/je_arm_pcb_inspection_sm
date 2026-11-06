@@ -49,12 +49,17 @@ struct StPlaceCartesianDown : smacc2::SmaccState<StPlaceCartesianDown, StPlace>
 
   void onEntry()
   {
+    bool loopMode = false;
+    bool returningToPick = false;
+    this->getGlobalSMData(std::string(sm_data::kLoopMode), loopMode);
+    this->getGlobalSMData(std::string(sm_data::kReturningToPick), returningToPick);
     this->setGlobalSMData(
       std::string(sm_data::kPlaceResumeSubstateId),
       std::string(sm_data::kPlaceSubstateCartesianDown));
     this->setGlobalSMData(
       std::string(sm_data::kPlaceDelayNextSubstateId),
-      std::string(sm_data::kPlaceSubstateGripperOpen));
+      std::string(loopMode && !returningToPick ?
+        sm_data::kPlaceSubstateCartesianUp : sm_data::kPlaceSubstateGripperOpen));
     this->setGlobalSMData(
       std::string(sm_data::kResumeStateId),
       std::string(sm_data::kWorkState));

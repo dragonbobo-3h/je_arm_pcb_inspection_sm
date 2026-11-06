@@ -18,6 +18,7 @@
 #include <cl_moveit2z/cl_moveit2z.hpp>
 #include <cl_moveit2z/components/cp_trajectory_executor.hpp>
 
+#include "je_arm_pcb_inspection_sm/components/cp_top_level_flow.hpp"
 #include "je_arm_pcb_inspection_sm/events.hpp"
 #include "je_arm_pcb_inspection_sm/orthogonals/or_arm.hpp"
 #include "je_arm_pcb_inspection_sm/sm_data.hpp"
@@ -150,6 +151,29 @@ public:
       key,
       normalizedKey,
       stateName.c_str());
+
+    bool loopMode = false;
+    this->getStateMachine()->getGlobalSMData(std::string(sm_data::kLoopMode), loopMode);
+    if (loopMode && normalizedKey == 'n' && isWorkPhaseState &&
+      stateName.find("StInspectFrontPoseWaitAck") == std::string::npos &&
+      stateName.find("StInspectRightViewWaitAck") == std::string::npos)
+    {
+      RCLCPP_WARN(getLogger(), "LOOP ignores motion/gripper bypass 'n'; use 'p' to pause");
+      return;
+    }
+    if (loopMode && normalizedKey == 'u' &&
+      (isWorkPhaseState || stateName.find("StWaitResources") != std::string::npos ||
+      stateName.find("StBack") != std::string::npos || stateName.find("StDelay") != std::string::npos ||
+      stateName.find("StActivate") != std::string::npos))
+    {
+      // The loop owns PCB availability after the first PICK. Resource withdrawal
+      // must stop motion instead of only publishing a detection it would ignore.
+      cancelTrajectoryExecutorIfAvailable();
+      this->getStateMachine()->setGlobalSMData(
+        std::string(sm_data::kPauseReason), std::string("循环模式资源撤销: key='u'"));
+      this->postEvent<EvPauseRequested>();
+      return;
+    }
 
     auto setPauseReasonFromState = [&]() {
       this->getStateMachine()->setGlobalSMData(
@@ -374,6 +398,17 @@ public:
       }
       else if (normalizedKey == 'b')
       {
+        if (loopMode)
+        {
+          CpTopLevelFlow * flow = nullptr;
+          this->requiresComponent(flow);
+          flow->resetLoopForManualBack();
+          RCLCPP_WARN(
+            log_utils::bizLogger(),
+            "LOOP manual BACK: cleared saved PICK pose and old detection; "
+            "waiting for a new valid PCB detection before restarting PICK. "
+            "Ensure the gripper is empty and the PCB is available at the detected pose.");
+        }
         this->postEvent<EvKeyBack>();
       }
       else if (normalizedKey == 'f')

@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+set -u
+
+if (( EUID != 0 )); then
+    exec sudo -- "$0" "$@"
+fi
+
+if (( $# != 0 )); then
+    echo "Usage: $0" >&2
+    exit 2
+fi
+
+read_register() {
+    local slave=$1 address=$2
+
+    ethercat reg_read --position "$slave" --type uint8 "$address" 2>/dev/null |
+        awk 'NR == 1 { print $1 }'
+}
+
+result=$(ethercat slaves) || exit $?
+healthy=1
+
+while IFS= read -r line; do
+    read -r slave _ al_state _ <<< "$line"
+
+    reg_0300=$(read_register "$slave" 0x0300)
+    reg_0301=$(read_register "$slave" 0x0301)
+    reg_0302=$(read_register "$slave" 0x0302)
+    reg_0303=$(read_register "$slave" 0x0303)
+    reg_0308=$(read_register "$slave" 0x0308)
+    reg_0309=$(read_register "$slave" 0x0309)
+    reg_0310=$(read_register "$slave" 0x0310)
+    reg_0311=$(read_register "$slave" 0x0311)
+
+    if [[ -z $reg_0300 || -z $reg_0301 || -z $reg_0302 || -z $reg_0303 ||
+          -z $reg_0308 || -z $reg_0309 || -z $reg_0310 || -z $reg_0311 ]]; then
+        printf '%s  [ESC READ_FAILED]\n' "$line"
+        healthy=0
+        continue
+    fi
+
+    if [[ $al_state != "OP" || $reg_0300 != "0x00" || $reg_0301 != "0x00" ||
+          $reg_0302 != "0x00" || $reg_0303 != "0x00" || $reg_0308 != "0x00" ||
+          $reg_0309 != "0x00" || $reg_0310 != "0x00" || $reg_0311 != "0x00" ]]; then
+        esc_state="WARNING"
+        healthy=0
+    else
+        esc_state="OK"
+    fi
+
+    printf '%s  [ESC=%s 0x0300=%s 0x0301=%s 0x0302=%s 0x0303=%s 0x0308=%s 0x0309=%s 0x0310=%s 0x0311=%s]\n' \
+        "$line" "$esc_state" "$reg_0300" "$reg_0301" "$reg_0302" "$reg_0303" \
+        "$reg_0308" "$reg_0309" "$reg_0310" "$reg_0311"
+done <<< "$result"
+
+if (( healthy )); then
+    echo "Overall: HEALTHY (all slaves OP and monitored ESC registers are zero)"
+else
+    echo "Overall: WARNING (check slave AL state and non-zero/read-failed ESC registers)"
+fi
+
+exit $(( ! healthy ))

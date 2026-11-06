@@ -118,6 +118,7 @@ struct EvPlaceResumeToMove : sc::event<EvPlaceResumeToMove> {};
 struct EvPlaceResumeToRelease : sc::event<EvPlaceResumeToRelease> {};
 struct EvPlaceResumeToRetreat : sc::event<EvPlaceResumeToRetreat> {};
 struct EvPlaceResumeToClose : sc::event<EvPlaceResumeToClose> {};
+struct EvPlaceResumeToReturnToPick : sc::event<EvPlaceResumeToReturnToPick> {};
 struct EvPlaceReleased : sc::event<EvPlaceReleased> {};
 
 }  // namespace je_arm_pcb_inspection_sm

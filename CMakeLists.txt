@@ -83,4 +83,10 @@ install(TARGETS
   DESTINATION lib/${PROJECT_NAME}
 )
 
+install(PROGRAMS
+  scripts/ethercat_registers
+  scripts/ethercat_clear_registers
+  DESTINATION lib/${PROJECT_NAME}
+)
+
 ament_package()

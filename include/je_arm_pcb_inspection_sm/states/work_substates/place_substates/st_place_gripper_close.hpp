@@ -23,12 +23,14 @@ struct StPlace;
 namespace place_substates
 {
 
+struct StPlaceCycleComplete;
+
 struct StPlaceGripperClose : smacc2::SmaccState<StPlaceGripperClose, StPlace>
 {
   using SmaccState::SmaccState;
 
   typedef boost::mpl::list<
-    smacc2::Transition<smacc2::EvCbSuccess<cl_moveit2z::CbCtrlGripper, OrGripper>, StBack>,
+    smacc2::Transition<smacc2::EvCbSuccess<cl_moveit2z::CbCtrlGripper, OrGripper>, StPlaceCycleComplete>,
     smacc2::Transition<smacc2::EvCbFailure<cl_moveit2z::CbCtrlGripper, OrGripper>, StPause>,
     smacc2::Transition<EvPlaceDone, StBack>,
     smacc2::Transition<EvPauseRequested, StPause>

@@ -37,6 +37,7 @@ struct StPlace : smacc2::SmaccState<StPlace, StWork, place_substates::StPlaceRes
 
     if (!placeResumeFromPause)
     {
+      this->setGlobalSMData(std::string(sm_data::kReturningToPick), false);
       this->setGlobalSMData(
         std::string(sm_data::kPlaceResumeSubstateId),
         std::string(sm_data::kPlaceSubstateLPregrasp));
@@ -53,8 +54,13 @@ struct StPlace : smacc2::SmaccState<StPlace, StWork, place_substates::StPlaceRes
 
   void onExit()
   {
-    // 消耗当前待处理PCB，避免在资源未更新前无限循环
-    flow_->setPcbPresent(false);
+    bool loopMode = false;
+    this->getGlobalSMData(std::string(sm_data::kLoopMode), loopMode);
+    if (!loopMode)
+    {
+      // 循环模式的资源只在物料成功放回后恢复，暂停/延时退出不算完成。
+      flow_->setPcbPresent(false);
+    }
   }
 
 private:
@@ -71,3 +77,4 @@ private:
 #include "je_arm_pcb_inspection_sm/states/work_substates/place_substates/st_place_release.hpp"
 #include "je_arm_pcb_inspection_sm/states/work_substates/place_substates/st_place_retreat.hpp"
 #include "je_arm_pcb_inspection_sm/states/work_substates/place_substates/st_place_gripper_close.hpp"
+#include "je_arm_pcb_inspection_sm/states/work_substates/place_substates/st_place_return_to_pick.hpp"

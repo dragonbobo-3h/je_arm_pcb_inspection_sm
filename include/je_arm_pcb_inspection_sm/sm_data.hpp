@@ -48,6 +48,9 @@ inline constexpr const char * kPickDelayNextSubstateId = "pick_delay_next_substa
 inline constexpr const char * kInspectResumeFromPause = "inspect_resume_from_pause";
 inline constexpr const char * kInspectResumeSubstateId = "inspect_resume_substate_id";
 inline constexpr const char * kSkipInspectHandover = "skip_inspect_handover";
+inline constexpr const char * kLoopMode = "loop_mode";
+inline constexpr const char * kReturningToPick = "returning_to_pick";
+inline constexpr const char * kBackLinearReturn = "back_linear_return";
 inline constexpr const char * kInspectSubstateFrontPose = "INSPECT_FRONT_POSE";
 inline constexpr const char * kInspectSubstateAlignForRightHandover = "INSPECT_ALIGN_FOR_RIGHT_HANDOVER";
 inline constexpr const char * kInspectSubstateRightBothGrippersClose = "INSPECT_RIGHT_BOTH_GRIPPERS_CLOSE";
@@ -75,6 +78,7 @@ inline constexpr const char * kPlaceSubstateCartesianDown = "PLACE_CARTESIAN_DOW
 inline constexpr const char * kPlaceSubstateGripperOpen = "PLACE_GRIPPER_OPEN";
 inline constexpr const char * kPlaceSubstateCartesianUp = "PLACE_CARTESIAN_UP";
 inline constexpr const char * kPlaceSubstateGripperClose = "PLACE_GRIPPER_CLOSE";
+inline constexpr const char * kPlaceSubstateReturnToPick = "PLACE_RETURN_TO_PICK";
 inline constexpr const char * kPlaceDelayNextSubstateId = "place_delay_next_substate_id";
 
 inline constexpr const char * kPcbPresent = "pcb_present";

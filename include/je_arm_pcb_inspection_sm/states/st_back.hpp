@@ -7,6 +7,7 @@
 #include <cl_moveit2z/client_behaviors/cb_move_known_state.hpp>
 
 #include "je_arm_pcb_inspection_sm/components/cp_top_level_flow.hpp"
+#include "je_arm_pcb_inspection_sm/behaviors/cb_return_to_start_linear.hpp"
 #include "je_arm_pcb_inspection_sm/orthogonals/or_arm.hpp"
 #include "je_arm_pcb_inspection_sm/sm_data.hpp"
 #include "je_arm_pcb_inspection_sm/utils/logging.hpp"
@@ -29,15 +30,25 @@ struct StBack : smacc2::SmaccState<StBack, SmJeArmPcbInspection>
   typedef boost::mpl::list<
     smacc2::Transition<smacc2::EvCbSuccess<cl_moveit2z::CbMoveKnownState, OrArm>, StWaitResources>,
     smacc2::Transition<smacc2::EvCbFailure<cl_moveit2z::CbMoveKnownState, OrArm>, StPause>,
+    smacc2::Transition<smacc2::EvCbSuccess<CbReturnToStartLinear, OrArm>, StWaitResources>,
+    smacc2::Transition<smacc2::EvCbFailure<CbReturnToStartLinear, OrArm>, StPause>,
     smacc2::Transition<EvDelayRequested, StDelay>,
     smacc2::Transition<EvPauseRequested, StPause>
   > reactions;
 
-  static void staticConfigure()
+  void runtimeConfigure()
   {
-    configure_orthogonal<OrArm, cl_moveit2z::CbMoveKnownState>(
-      "je_arm_pcb_inspection_sm",
-      "config/move_group_client/joint_states/dual_pick_p2.yaml");
+    this->getGlobalSMData(std::string(sm_data::kBackLinearReturn), linearReturn_);
+    if (linearReturn_)
+    {
+      this->configure<OrArm, CbReturnToStartLinear>();
+    }
+    else
+    {
+      this->configure<OrArm, cl_moveit2z::CbMoveKnownState>(
+        "je_arm_pcb_inspection_sm",
+        "config/move_group_client/joint_states/dual_pick_p2.yaml");
+    }
   }
 
   void onEntry() 
@@ -49,8 +60,9 @@ struct StBack : smacc2::SmaccState<StBack, SmJeArmPcbInspection>
     flow_->setResumeTarget(sm_data::kBackState);
     RCLCPP_INFO(
       log_utils::bizLogger(),
-      "[%s] ENTER BACK - moving to WAIT_RESOURCES start pose (pick_p2)",
-      log_utils::bjtNowString().c_str());
+      "[%s] ENTER BACK - moving to WAIT_RESOURCES start pose (pick_p2), motion=%s",
+      log_utils::bjtNowString().c_str(),
+      linearReturn_ ? "Cartesian linear" : "joint-space");
 
     auto node = this->getStateMachine().getNode();
     syncTimer_ = node->create_wall_timer(
@@ -72,6 +84,7 @@ struct StBack : smacc2::SmaccState<StBack, SmJeArmPcbInspection>
   }
 
 private:
+  bool linearReturn_{false};
   CpTopLevelFlow * flow_;
   rclcpp::TimerBase::SharedPtr syncTimer_;
 };

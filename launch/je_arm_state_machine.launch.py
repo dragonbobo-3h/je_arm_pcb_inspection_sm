@@ -1,5 +1,5 @@
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, ExecuteProcess, TimerAction
+from launch.actions import DeclareLaunchArgument, ExecuteProcess, SetEnvironmentVariable, TimerAction
 from launch.substitutions import EnvironmentVariable
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
@@ -28,6 +28,9 @@ def generate_launch_description():
     inspect_done_topic = LaunchConfiguration("inspect_done_topic")
     inspect_front_trigger_service = LaunchConfiguration("inspect_front_trigger_service")
     inspect_back_trigger_service = LaunchConfiguration("inspect_back_trigger_service")
+    skip_inspect_handover = LaunchConfiguration("skip_inspect_handover")
+    loop_mode = LaunchConfiguration("loop_mode")
+    controlled_arm = LaunchConfiguration("controlled_arm")
 
     runtime_env = {
         "PYTHONPATH": "",
@@ -97,9 +100,9 @@ def generate_launch_description():
                 "export PATH=/usr/bin:/bin:/usr/sbin:/sbin:$PATH && "
                 "export ROS_DOMAIN_ID=199 && "
                 "source /opt/ros/humble/setup.bash && "
-                "source /home/agx/ros2_ws/install/setup.bash && "
+                "source /home/test/ros2_ws/install/setup.bash && "
                 "echo 'SMACC2 keyboard ready: s(start), n(next step), w(loop), p(pause), r(resume), b(back), f(fault), u(resource-unavailable)' && "
-                "/usr/bin/python3 /home/agx/ros2_ws/install/cl_keyboard/lib/cl_keyboard/keyboard_server_node.py; "
+                "/usr/bin/python3 /home/test/ros2_ws/install/cl_keyboard/lib/cl_keyboard/keyboard_server_node.py; "
                 "echo; echo 'keyboard_server_node exited'; "
                 "read -r -n 1 -s -p 'Press any key to close...'"
             ),
@@ -129,6 +132,9 @@ def generate_launch_description():
                         "inspect_done_topic": inspect_done_topic,
                         "inspect_front_trigger_service": inspect_front_trigger_service,
                         "inspect_back_trigger_service": inspect_back_trigger_service,
+                        "skip_inspect_handover": ParameterValue(skip_inspect_handover, value_type=bool),
+                        "loop_mode": ParameterValue(loop_mode, value_type=bool),
+                        "controlled_arm": controlled_arm,
                     },
                 ],
                 arguments=[
@@ -157,7 +163,7 @@ def generate_launch_description():
             ),
             DeclareLaunchArgument(
                 "enable_gripper_control",
-                default_value="false",
+                default_value="true",
                 description="Whether to send real gripper commands; false simulates each open/close action",
             ),
             DeclareLaunchArgument(
@@ -167,7 +173,7 @@ def generate_launch_description():
             ),
             DeclareLaunchArgument(
                 "gripper_action_delay_sec",
-                default_value="0.0",
+                default_value="0.3",
                 description="Optional extra settle time after a gripper action reaches its completion condition; applies in real mode and overrides simulated duration when > 0",
             ),
             DeclareLaunchArgument(
@@ -194,6 +200,27 @@ def generate_launch_description():
                 "inspect_back_trigger_service",
                 default_value="/vision/inspect_back",
                 description="ROS Trigger service called when back-side inspection is ready; if unavailable, manual 'n' and inspect_done topic remain usable",
+            ),
+            DeclareLaunchArgument(
+                "skip_inspect_handover",
+                default_value="true",
+                description="After front-side inspection, skip handovers and continue directly to placement",
+            ),
+            DeclareLaunchArgument(
+                "loop_mode",
+                default_value="true",
+                description="Keep the PCB gripped at PLACE, return it to the saved PICK pose, then repeat after returning to the start pose",
+                choices=["true", "false"],
+            ),
+            DeclareLaunchArgument(
+                "controlled_arm",
+                default_value="left",
+                description="Arm command output: both, left, or right. The other arm's joint and gripper commands are blocked.",
+                choices=["both", "left", "right"],
+            ),
+            SetEnvironmentVariable(
+                name="JE_ARM_CONTROLLED_ARM",
+                value=controlled_arm,
             ),
             keyboard_server,
             sm_node,

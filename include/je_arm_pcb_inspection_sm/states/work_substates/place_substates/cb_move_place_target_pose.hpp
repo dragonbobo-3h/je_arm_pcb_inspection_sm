@@ -6,6 +6,8 @@
 #include <cl_moveit2z/client_behaviors/cb_move_end_effector_linear_seeded.hpp>
 
 #include "je_arm_pcb_inspection_sm/sm_data.hpp"
+#include "je_arm_pcb_inspection_sm/components/cp_top_level_flow.hpp"
+#include "je_arm_pcb_inspection_sm/utils/pick_offset_loader.hpp"
 #include "je_arm_pcb_inspection_sm/utils/place_offset_loader.hpp"
 
 namespace je_arm_pcb_inspection_sm
@@ -45,6 +47,20 @@ public:
     stateMachine->getGlobalSMData(std::string(sm_data::kPlaceTargetQz), pose.pose.orientation.z);
     stateMachine->getGlobalSMData(std::string(sm_data::kPlaceTargetQw), pose.pose.orientation.w);
 
+    bool returningToPick = false;
+    stateMachine->getGlobalSMData(std::string(sm_data::kReturningToPick), returningToPick);
+    if (returningToPick)
+    {
+      CpTopLevelFlow * flow = nullptr;
+      this->requiresComponent(flow);
+      if (!flow || !flow->getLoopPickPose(pose))
+      {
+        RCLCPP_ERROR(getLogger(), "RETURN_TO_PICK has no valid saved pickup pose; refusing motion");
+        this->postFailureEvent();
+        return;
+      }
+    }
+
     std::string offsetPath;
 
     double offsetX = 0.0;
@@ -52,7 +68,9 @@ public:
     double offsetZ = 0.0;
     const bool offsetLoaded =
       useYamlOffset_ &&
-      je_arm_pcb_inspection_sm::utils::loadPlaceOffset(offsetX, offsetY, offsetZ, offsetPath);
+      (returningToPick ?
+        je_arm_pcb_inspection_sm::utils::loadPickOffset(offsetX, offsetY, offsetZ, offsetPath) :
+        je_arm_pcb_inspection_sm::utils::loadPlaceOffset(offsetX, offsetY, offsetZ, offsetPath));
 
     if (useYamlOffset_)
     {
@@ -65,7 +83,8 @@ public:
 
     RCLCPP_INFO(
       getLogger(),
-      "[CbMovePlaceTargetPose] target (use_yaml_offset=%s, place_offset: %.4f, %.4f, %.4f, file=%s) -> frame=%s pos=(%.4f, %.4f, %.4f) quat=(%.4f, %.4f, %.4f, %.4f)",
+      "[CbMovePlaceTargetPose] target (return_to_pick=%s, use_yaml_offset=%s, offset: %.4f, %.4f, %.4f, file=%s) -> frame=%s pos=(%.4f, %.4f, %.4f) quat=(%.4f, %.4f, %.4f, %.4f)",
+      returningToPick ? "true" : "false",
       useYamlOffset_ ? "true" : "false",
       offsetX,
       offsetY,

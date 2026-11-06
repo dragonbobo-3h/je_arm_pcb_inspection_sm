@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+set -u
+
+if (( EUID != 0 )); then
+    exec sudo -- "$0" "$@"
+fi
+
+if (( $# != 0 )); then
+    echo "Usage: $0" >&2
+    exit 2
+fi
+
+readonly REGISTER_VIEWER="$(cd "$(dirname "$0")" && pwd)/ethercat_registers"
+readonly -a REGISTERS=(0x0300 0x0301 0x0302 0x0303 0x0308 0x0309 0x0310 0x0311)
+
+if [[ ! -x $REGISTER_VIEWER ]]; then
+    echo "Register viewer not found or not executable: $REGISTER_VIEWER" >&2
+    exit 1
+fi
+
+result=$(ethercat slaves) || exit $?
+write_failed=0
+
+while IFS= read -r line; do
+    read -r slave _ <<< "$line"
+    slave_failed=0
+
+    for address in "${REGISTERS[@]}"; do
+        if ! error=$(ethercat reg_write --position "$slave" --type uint8 "$address" 0 2>&1); then
+            printf 'Slave %s: failed to clear %s: %s\n' "$slave" "$address" "$error" >&2
+            slave_failed=1
+            write_failed=1
+        fi
+    done
+
+    if (( ! slave_failed )); then
+        printf 'Slave %s: clear request sent\n' "$slave"
+    fi
+done <<< "$result"
+
+echo
+echo "Verification:"
+"$REGISTER_VIEWER"
+verify_status=$?
+
+if (( write_failed )); then
+    exit 1
+fi
+
+exit "$verify_status"

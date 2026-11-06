@@ -91,6 +91,14 @@ struct SmJeArmPcbInspection : public smacc2::SmaccStateMachineBase<SmJeArmPcbIns
     {
       node->declare_parameter<bool>("skip_inspect_handover", false);
     }
+    if (!node->has_parameter("controlled_arm"))
+    {
+      node->declare_parameter<std::string>("controlled_arm", "both");
+    }
+    if (!node->has_parameter("loop_mode"))
+    {
+      node->declare_parameter<bool>("loop_mode", false);
+    }
 
     bool publishStaticObstacles = true;
     bool enableGripperControl = false;
@@ -99,6 +107,7 @@ struct SmJeArmPcbInspection : public smacc2::SmaccStateMachineBase<SmJeArmPcbIns
     std::string inspectFrontTriggerService = "/vision/inspect_front";
     std::string inspectBackTriggerService = "/vision/inspect_back";
     bool skipInspectHandover = false;
+    std::string controlledArm = "both";
 
     node->get_parameter_or("publish_static_obstacles", publishStaticObstacles, true);
     node->get_parameter_or("enable_gripper_control", enableGripperControl, false);
@@ -107,10 +116,11 @@ struct SmJeArmPcbInspection : public smacc2::SmaccStateMachineBase<SmJeArmPcbIns
     node->get_parameter_or("inspect_front_trigger_service", inspectFrontTriggerService, std::string("/vision/inspect_front"));
     node->get_parameter_or("inspect_back_trigger_service", inspectBackTriggerService, std::string("/vision/inspect_back"));
     node->get_parameter_or("skip_inspect_handover", skipInspectHandover, false);
+    node->get_parameter_or("controlled_arm", controlledArm, std::string("both"));
 
     RCLCPP_INFO(
       log_utils::bizLogger(),
-      "[%s] SM params | publish_static_obstacles=%d enable_gripper_control=%d simulated_gripper_action_sec=%.2f gripper_action_delay_sec=%.2f inspect_front_trigger_service=%s inspect_back_trigger_service=%s skip_inspect_handover=%d",
+      "[%s] SM params | publish_static_obstacles=%d enable_gripper_control=%d simulated_gripper_action_sec=%.2f gripper_action_delay_sec=%.2f inspect_front_trigger_service=%s inspect_back_trigger_service=%s skip_inspect_handover=%d controlled_arm=%s",
       log_utils::bjtNowString().c_str(),
       publishStaticObstacles,
       enableGripperControl,
@@ -118,7 +128,8 @@ struct SmJeArmPcbInspection : public smacc2::SmaccStateMachineBase<SmJeArmPcbIns
       gripperActionDelaySec,
       inspectFrontTriggerService.c_str(),
       inspectBackTriggerService.c_str(),
-      skipInspectHandover);
+      skipInspectHandover,
+      controlledArm.c_str());
 
     this->setGlobalSMData(std::string(sm_data::kResumeStateId), std::string(sm_data::kWaitResourcesState));
     this->setGlobalSMData(std::string(sm_data::kResumeFromPause), false);
@@ -134,6 +145,11 @@ struct SmJeArmPcbInspection : public smacc2::SmaccStateMachineBase<SmJeArmPcbIns
     this->setGlobalSMData(std::string(sm_data::kWorkDelayNextSubstateId), std::string(sm_data::kWorkSubstatePick));
     this->setGlobalSMData(std::string(sm_data::kPickResumeFromPause), false);
     this->setGlobalSMData(std::string(sm_data::kSkipInspectHandover), skipInspectHandover);
+    const bool loopMode = node->get_parameter("loop_mode").as_bool();
+    this->setGlobalSMData(std::string(sm_data::kLoopMode), loopMode);
+    this->setGlobalSMData(std::string(sm_data::kReturningToPick), false);
+    this->setGlobalSMData(std::string(sm_data::kBackLinearReturn), false);
+    RCLCPP_INFO(log_utils::bizLogger(), "Material reuse loop_mode=%s", loopMode ? "true" : "false");
     this->setGlobalSMData(std::string(sm_data::kPickResumeSubstateId), std::string(sm_data::kPickSubstateLPregrasp));
     this->setGlobalSMData(std::string(sm_data::kPickDelayNextSubstateId), std::string(sm_data::kPickSubstateGripperOpen));
     this->setGlobalSMData(std::string(sm_data::kPlaceResumeFromPause), false);

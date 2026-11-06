@@ -115,6 +115,7 @@ struct StWaitResources : smacc2::SmaccState<StWaitResources, SmJeArmPcbInspectio
     enable_gripper_control_ = detail::getBoolParameter(node, "enable_gripper_control", true);
     simulated_gripper_action_sec_ = detail::getDoubleParameter(node, "simulated_gripper_action_sec", 2.0);
     gripper_action_delay_sec_ = detail::getDoubleParameter(node, "gripper_action_delay_sec", 0.0);
+    node->get_parameter_or("controlled_arm", controlled_arm_, std::string("both"));
     this->getGlobalSMData(std::string(sm_data::kWorkResumeSubstateId), pendingWorkSubstate_);
     enteredTime_ = std::chrono::steady_clock::now();
     gripperCloseConfirmedTime_ = enteredTime_;
@@ -123,12 +124,13 @@ struct StWaitResources : smacc2::SmaccState<StWaitResources, SmJeArmPcbInspectio
     flow_->setResumeTarget(sm_data::kWaitResourcesState);
     RCLCPP_INFO(
       log_utils::bizLogger(),
-      "[%s] ENTER WAIT_RESOURCES | pending_work_substate=%s enable_gripper_control=%d simulated_gripper_action_sec=%.2f gripper_action_delay_sec=%.2f",
+      "[%s] ENTER WAIT_RESOURCES | pending_work_substate=%s enable_gripper_control=%d simulated_gripper_action_sec=%.2f gripper_action_delay_sec=%.2f controlled_arm=%s",
       log_utils::bjtNowString().c_str(),
       pendingWorkSubstate_.c_str(),
       enable_gripper_control_,
       simulated_gripper_action_sec_,
-      gripper_action_delay_sec_);
+      gripper_action_delay_sec_,
+      controlled_arm_.c_str());
 
     if (shouldSkipDualCloseInThisCycle())
     {
@@ -313,8 +315,8 @@ private:
   void publishDualCloseCommand()
   {
     je_software::msg::EndEffectorCommandLR msg;
-    msg.left_valid = true;
-    msg.right_valid = true;
+    msg.left_valid = controlled_arm_ != "right";
+    msg.right_valid = controlled_arm_ != "left";
 
     auto fillCommand = [this](je_software::msg::EndEffectorCommand & command)
     {
@@ -325,15 +327,23 @@ private:
       command.torque = gripperCloseConfig_.torque;
     };
 
-    fillCommand(msg.left);
-    fillCommand(msg.right);
+    if (msg.left_valid)
+    {
+      fillCommand(msg.left);
+    }
+    if (msg.right_valid)
+    {
+      fillCommand(msg.right);
+    }
 
     gripperPublisher_->publish(msg);
     RCLCPP_INFO(
       log_utils::bizLogger(),
-      "[%s] WAIT_RESOURCES dual-close command dispatched on %s",
+      "[%s] WAIT_RESOURCES close command dispatched on %s | left=%d right=%d",
       log_utils::bjtNowString().c_str(),
-      gripperCloseConfig_.topic.c_str());
+      gripperCloseConfig_.topic.c_str(),
+      msg.left_valid,
+      msg.right_valid);
   }
 
   void onGripperFeedback(const common::msg::OculusInitJointState::SharedPtr msg)
@@ -343,10 +353,12 @@ private:
       return;
     }
 
-    const bool leftClosed = msg->left_valid &&
-      std::fabs(msg->left_gripper - kGripperPositionClosed) <= kGripperPositionTolerance;
-    const bool rightClosed = msg->right_valid &&
-      std::fabs(msg->right_gripper - kGripperPositionClosed) <= kGripperPositionTolerance;
+    const bool leftClosed = controlled_arm_ == "right" ||
+      (msg->left_valid &&
+      std::fabs(msg->left_gripper - kGripperPositionClosed) <= kGripperPositionTolerance);
+    const bool rightClosed = controlled_arm_ == "left" ||
+      (msg->right_valid &&
+      std::fabs(msg->right_gripper - kGripperPositionClosed) <= kGripperPositionTolerance);
 
     if (!leftClosed || !rightClosed)
     {
@@ -357,8 +369,9 @@ private:
     gripperCloseConfirmedTime_ = std::chrono::steady_clock::now();
     RCLCPP_INFO(
       log_utils::bizLogger(),
-      "[%s] WAIT_RESOURCES confirmed both grippers closed | left=%.4f right=%.4f",
+      "[%s] WAIT_RESOURCES confirmed active gripper(s) closed | controlled_arm=%s left=%.4f right=%.4f",
       log_utils::bjtNowString().c_str(),
+      controlled_arm_.c_str(),
       msg->left_gripper,
       msg->right_gripper);
   }
@@ -374,6 +387,7 @@ private:
   bool enable_gripper_control_{true};
   double simulated_gripper_action_sec_{2.0};
   double gripper_action_delay_sec_{0.0};
+  std::string controlled_arm_{"both"};
   std::string pendingWorkSubstate_{sm_data::kWorkSubstatePick};
   je_arm_pcb_inspection_sm::utils::GripperCommandConfig gripperCloseConfig_;
 };

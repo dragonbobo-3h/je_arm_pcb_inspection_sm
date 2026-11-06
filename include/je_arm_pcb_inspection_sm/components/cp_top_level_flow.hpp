@@ -4,6 +4,7 @@
 #include <common/msg/pcb_detection.hpp>
 #include <common/msg/place_slot.hpp>
 #include <mutex>
+#include <optional>
 #include <string>
 
 #include <geometry_msgs/msg/pose_stamped.hpp>
@@ -135,6 +136,76 @@ public:
     this->getStateMachine()->setGlobalSMData(std::string(sm_data::kPcbPresent), value);
   }
 
+  // Latch the pose actually selected for PICK, not subsequent vision updates.
+  // Keep it across cycles: the same PCB is returned to this fixture each time.
+  void beginLoopCycle()
+  {
+    this->getStateMachine()->setGlobalSMData(std::string(sm_data::kBackLinearReturn), false);
+    if (!getBoolData(sm_data::kLoopMode, false))
+    {
+      return;
+    }
+    std::scoped_lock<std::mutex> lock(dataMutex_);
+    if (!loopPickPose_)
+    {
+      geometry_msgs::msg::PoseStamped pose;
+      auto * sm = this->getStateMachine();
+      sm->getGlobalSMData(std::string(sm_data::kPcbTargetFrameId), pose.header.frame_id);
+      sm->getGlobalSMData(std::string(sm_data::kPcbTargetX), pose.pose.position.x);
+      sm->getGlobalSMData(std::string(sm_data::kPcbTargetY), pose.pose.position.y);
+      sm->getGlobalSMData(std::string(sm_data::kPcbTargetZ), pose.pose.position.z);
+      sm->getGlobalSMData(std::string(sm_data::kPcbTargetQx), pose.pose.orientation.x);
+      sm->getGlobalSMData(std::string(sm_data::kPcbTargetQy), pose.pose.orientation.y);
+      sm->getGlobalSMData(std::string(sm_data::kPcbTargetQz), pose.pose.orientation.z);
+      sm->getGlobalSMData(std::string(sm_data::kPcbTargetQw), pose.pose.orientation.w);
+      loopPickPose_ = pose;
+    }
+    loopPcbAvailable_ = false;
+  }
+
+  bool getLoopPickPose(geometry_msgs::msg::PoseStamped & pose)
+  {
+    std::scoped_lock<std::mutex> lock(dataMutex_);
+    if (!loopPickPose_ || !isPoseValid(loopPickPose_->pose) ||
+      loopPickPose_->header.frame_id.empty())
+    {
+      return false;
+    }
+    pose = *loopPickPose_;
+    return true;
+  }
+
+  // Called only after return/release/retreat/close have all succeeded.
+  void completeLoopCycle()
+  {
+    std::scoped_lock<std::mutex> lock(dataMutex_);
+    loopPcbAvailable_ = loopPickPose_.has_value();
+    this->getStateMachine()->setGlobalSMData(
+      std::string(sm_data::kBackLinearReturn), loopPcbAvailable_);
+  }
+
+  // Explicit operator restart ('b'), not resume ('r') or fault return ('f').
+  // Forget the abandoned cycle without pretending that its PCB was returned.
+  // Only a subsequently received valid detection can make PICK ready again.
+  void resetLoopForManualBack()
+  {
+    if (!getBoolData(sm_data::kLoopMode, false))
+    {
+      return;
+    }
+
+    std::scoped_lock<std::mutex> lock(dataMutex_);
+    loopPickPose_.reset();
+    loopPcbAvailable_ = false;
+    hasValidPcbPose_ = false;
+    auto * sm = this->getStateMachine();
+    sm->setGlobalSMData(std::string(sm_data::kPcbPresent), false);
+    sm->setGlobalSMData(std::string(sm_data::kReturningToPick), false);
+    sm->setGlobalSMData(std::string(sm_data::kResumeFromPause), false);
+    // Preserve kBackLinearReturn for this return motion (including a retry
+    // after pausing BACK). The next PICK resets it in beginLoopCycle().
+  }
+
   double waitTimeoutSeconds()
   {
     return getDoubleData(sm_data::kWaitTimeoutSec, 10.0);
@@ -171,27 +242,28 @@ private:
   {
     std::scoped_lock<std::mutex> lock(dataMutex_);
 
+    const auto & pcbPose = loopPickPose_ ? *loopPickPose_ : latestPcbPose_;
     this->getStateMachine()->setGlobalSMData(
-      std::string(sm_data::kPcbPresent), hasValidPcbPose_);
+      std::string(sm_data::kPcbPresent), loopPickPose_ ? loopPcbAvailable_ : hasValidPcbPose_);
 
-    if (hasValidPcbPose_)
+    if (loopPickPose_ || hasValidPcbPose_)
     {
       this->getStateMachine()->setGlobalSMData(
-        std::string(sm_data::kPcbTargetFrameId), latestPcbPose_.header.frame_id);
+        std::string(sm_data::kPcbTargetFrameId), pcbPose.header.frame_id);
       this->getStateMachine()->setGlobalSMData(
-        std::string(sm_data::kPcbTargetX), latestPcbPose_.pose.position.x);
+        std::string(sm_data::kPcbTargetX), pcbPose.pose.position.x);
       this->getStateMachine()->setGlobalSMData(
-        std::string(sm_data::kPcbTargetY), latestPcbPose_.pose.position.y);
+        std::string(sm_data::kPcbTargetY), pcbPose.pose.position.y);
       this->getStateMachine()->setGlobalSMData(
-        std::string(sm_data::kPcbTargetZ), latestPcbPose_.pose.position.z);
+        std::string(sm_data::kPcbTargetZ), pcbPose.pose.position.z);
       this->getStateMachine()->setGlobalSMData(
-        std::string(sm_data::kPcbTargetQx), latestPcbPose_.pose.orientation.x);
+        std::string(sm_data::kPcbTargetQx), pcbPose.pose.orientation.x);
       this->getStateMachine()->setGlobalSMData(
-        std::string(sm_data::kPcbTargetQy), latestPcbPose_.pose.orientation.y);
+        std::string(sm_data::kPcbTargetQy), pcbPose.pose.orientation.y);
       this->getStateMachine()->setGlobalSMData(
-        std::string(sm_data::kPcbTargetQz), latestPcbPose_.pose.orientation.z);
+        std::string(sm_data::kPcbTargetQz), pcbPose.pose.orientation.z);
       this->getStateMachine()->setGlobalSMData(
-        std::string(sm_data::kPcbTargetQw), latestPcbPose_.pose.orientation.w);
+        std::string(sm_data::kPcbTargetQw), pcbPose.pose.orientation.w);
     }
 
     if (hasPlaceSlotUpdate_)
@@ -255,6 +327,8 @@ private:
   }
 
   std::mutex dataMutex_;
+  std::optional<geometry_msgs::msg::PoseStamped> loopPickPose_;
+  bool loopPcbAvailable_{false};
   bool hasValidPcbPose_{false};
   geometry_msgs::msg::PoseStamped latestPcbPose_;
   bool hasPlaceSlotUpdate_{false};

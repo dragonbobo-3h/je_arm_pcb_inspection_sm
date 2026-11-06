@@ -4,6 +4,7 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include "je_arm_pcb_inspection_sm/events.hpp"
+#include "je_arm_pcb_inspection_sm/components/cp_top_level_flow.hpp"
 #include "je_arm_pcb_inspection_sm/sm_data.hpp"
 
 namespace je_arm_pcb_inspection_sm
@@ -34,6 +35,9 @@ struct StPick : smacc2::SmaccState<StPick, StWork, pick_substates::StPickResumeR
 
   void onEntry()
   {
+    CpTopLevelFlow * flow = nullptr;
+    this->requiresComponent(flow);
+    flow->beginLoopCycle();
     bool pickResumeFromPause = false;
     this->getGlobalSMData(std::string(sm_data::kPickResumeFromPause), pickResumeFromPause);
 

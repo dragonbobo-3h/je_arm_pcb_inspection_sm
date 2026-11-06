@@ -20,6 +20,7 @@ struct StPlaceCartesianDown;
 struct StPlaceGripperOpen;
 struct StPlaceCartesianUp;
 struct StPlaceGripperClose;
+struct StPlaceReturnToPick;
 
 struct StPlaceResumeRouter : smacc2::SmaccState<StPlaceResumeRouter, StPlace>
 {
@@ -30,7 +31,8 @@ struct StPlaceResumeRouter : smacc2::SmaccState<StPlaceResumeRouter, StPlace>
     smacc2::Transition<EvPlaceResumeToMove, StPlaceCartesianDown>,
     smacc2::Transition<EvPlaceResumeToRelease, StPlaceGripperOpen>,
     smacc2::Transition<EvPlaceResumeToRetreat, StPlaceCartesianUp>,
-    smacc2::Transition<EvPlaceResumeToClose, StPlaceGripperClose>
+    smacc2::Transition<EvPlaceResumeToClose, StPlaceGripperClose>,
+    smacc2::Transition<EvPlaceResumeToReturnToPick, StPlaceReturnToPick>
   > reactions;
 
   void onEntry()
@@ -53,6 +55,10 @@ struct StPlaceResumeRouter : smacc2::SmaccState<StPlaceResumeRouter, StPlace>
     else if (substate == sm_data::kPlaceSubstateGripperClose)
     {
       this->template postEvent<EvPlaceResumeToClose>();
+    }
+    else if (substate == sm_data::kPlaceSubstateReturnToPick)
+    {
+      this->template postEvent<EvPlaceResumeToReturnToPick>();
     }
     else
     {

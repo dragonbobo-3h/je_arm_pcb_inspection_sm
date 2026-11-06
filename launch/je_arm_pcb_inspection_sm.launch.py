@@ -12,6 +12,7 @@ def generate_launch_description():
     start_state_machine = LaunchConfiguration("start_state_machine")
     use_fake_executor = LaunchConfiguration("use_fake_executor")
     skip_inspect_handover = LaunchConfiguration("skip_inspect_handover")
+    loop_mode = LaunchConfiguration("loop_mode")
 
     this_pkg_share = get_package_share_directory("je_arm_pcb_inspection_sm")
     moveit_pkg_share = get_package_share_directory("my_jearm_moveit_config")
@@ -37,7 +38,10 @@ def generate_launch_description():
     state_machine = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(state_machine_launch),
         condition=IfCondition(start_state_machine),
-        launch_arguments={"skip_inspect_handover": skip_inspect_handover}.items(),
+        launch_arguments={
+            "skip_inspect_handover": skip_inspect_handover,
+            "loop_mode": loop_mode,
+        }.items(),
     )
 
     return LaunchDescription(
@@ -65,6 +69,12 @@ def generate_launch_description():
             SetEnvironmentVariable(
                 name="LD_LIBRARY_PATH",
                 value=["/usr/lib/x86_64-linux-gnu:", EnvironmentVariable("LD_LIBRARY_PATH", default_value="")],
+            ),
+            DeclareLaunchArgument(
+                "loop_mode",
+                default_value="false",
+                description="Return the PCB to its saved PICK pose and repeat instead of releasing at PLACE",
+                choices=["true", "false"],
             ),
             control_stack,
             state_machine,
