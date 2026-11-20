@@ -16,6 +16,7 @@
 #pragma once
 
 #include <memory>
+#include <stdexcept>
 
 #include <moveit_msgs/msg/planning_scene.hpp>
 
@@ -38,6 +39,7 @@
 #include "je_arm_pcb_inspection_sm/sm_data.hpp"
 #include "je_arm_pcb_inspection_sm/utils/logging.hpp"
 #include "je_arm_pcb_inspection_sm/utils/planning_scene_obstacles.hpp"
+#include "je_arm_pcb_inspection_sm/utils/wait_resources_pose_loader.hpp"
 
 using namespace cl_moveit2z;
 using namespace cl_keyboard;
@@ -93,35 +95,104 @@ struct SmJeArmPcbInspection : public smacc2::SmaccStateMachineBase<SmJeArmPcbIns
     }
     if (!node->has_parameter("controlled_arm"))
     {
-      node->declare_parameter<std::string>("controlled_arm", "both");
+      node->declare_parameter<std::string>("controlled_arm", "left");
     }
     if (!node->has_parameter("loop_mode"))
     {
       node->declare_parameter<bool>("loop_mode", false);
     }
+    if (!node->has_parameter("arm_mode"))
+    {
+      node->declare_parameter<std::string>("arm_mode", "single");
+    }
 
-    bool publishStaticObstacles = true;
+    std::string armMode = "single";
+    node->get_parameter_or("arm_mode", armMode, std::string("single"));
+    const bool isSingleArm = (armMode != "dual");
+
+    if (!node->has_parameter("left_planning_group"))
+    {
+      node->declare_parameter<std::string>(
+        "left_planning_group", isSingleArm ? "jearm" : "left_arm");
+    }
+    if (!node->has_parameter("right_planning_group"))
+    {
+      node->declare_parameter<std::string>("right_planning_group", "right_arm");
+    }
+    if (!node->has_parameter("both_planning_group"))
+    {
+      node->declare_parameter<std::string>(
+        "both_planning_group", isSingleArm ? "jearm" : "both_arms");
+    }
+    if (!node->has_parameter("left_tip_link"))
+    {
+      node->declare_parameter<std::string>(
+        "left_tip_link", isSingleArm ? "sdk_flange" : "Left_Link7");
+    }
+    if (!node->has_parameter("right_tip_link"))
+    {
+      node->declare_parameter<std::string>("right_tip_link", "Right_Link7");
+    }
+    if (!node->has_parameter("joint_states_dir"))
+    {
+      node->declare_parameter<std::string>(
+        "joint_states_dir",
+        isSingleArm ?
+          "config/move_group_client/joint_states/mk2_single" :
+          "config/move_group_client/joint_states");
+    }
+
+    bool publishStaticObstacles = false;
     bool enableGripperControl = false;
     double simulatedGripperActionSec = 2.0;
     double gripperActionDelaySec = 0.0;
     std::string inspectFrontTriggerService = "/vision/inspect_front";
     std::string inspectBackTriggerService = "/vision/inspect_back";
-    bool skipInspectHandover = false;
-    std::string controlledArm = "both";
+    bool skipInspectHandover = true;
+    std::string controlledArm = "left";
+    std::string leftPlanningGroup = isSingleArm ? "jearm" : "left_arm";
+    std::string rightPlanningGroup = "right_arm";
+    std::string bothPlanningGroup = isSingleArm ? "jearm" : "both_arms";
+    std::string leftTipLink = isSingleArm ? "sdk_flange" : "Left_Link7";
+    std::string rightTipLink = "Right_Link7";
+    std::string jointStatesDir = isSingleArm ?
+      "config/move_group_client/joint_states/mk2_single" :
+      "config/move_group_client/joint_states";
 
-    node->get_parameter_or("publish_static_obstacles", publishStaticObstacles, true);
+    node->get_parameter_or("publish_static_obstacles", publishStaticObstacles, false);
     node->get_parameter_or("enable_gripper_control", enableGripperControl, false);
     node->get_parameter_or("simulated_gripper_action_sec", simulatedGripperActionSec, 2.0);
     node->get_parameter_or("gripper_action_delay_sec", gripperActionDelaySec, 0.0);
     node->get_parameter_or("inspect_front_trigger_service", inspectFrontTriggerService, std::string("/vision/inspect_front"));
     node->get_parameter_or("inspect_back_trigger_service", inspectBackTriggerService, std::string("/vision/inspect_back"));
-    node->get_parameter_or("skip_inspect_handover", skipInspectHandover, false);
-    node->get_parameter_or("controlled_arm", controlledArm, std::string("both"));
+    node->get_parameter_or("skip_inspect_handover", skipInspectHandover, true);
+    node->get_parameter_or("controlled_arm", controlledArm, std::string("left"));
+    node->get_parameter_or("left_planning_group", leftPlanningGroup, leftPlanningGroup);
+    node->get_parameter_or("right_planning_group", rightPlanningGroup, rightPlanningGroup);
+    node->get_parameter_or("both_planning_group", bothPlanningGroup, bothPlanningGroup);
+    node->get_parameter_or("left_tip_link", leftTipLink, leftTipLink);
+    node->get_parameter_or("right_tip_link", rightTipLink, rightTipLink);
+    node->get_parameter_or("joint_states_dir", jointStatesDir, jointStatesDir);
+
+    if (isSingleArm && !skipInspectHandover)
+    {
+      RCLCPP_WARN(
+        log_utils::bizLogger(),
+        "arm_mode=single does not support dual-arm handover; forcing skip_inspect_handover=true");
+      skipInspectHandover = true;
+    }
 
     RCLCPP_INFO(
       log_utils::bizLogger(),
-      "[%s] SM params | publish_static_obstacles=%d enable_gripper_control=%d simulated_gripper_action_sec=%.2f gripper_action_delay_sec=%.2f inspect_front_trigger_service=%s inspect_back_trigger_service=%s skip_inspect_handover=%d controlled_arm=%s",
+      "[%s] SM params | arm_mode=%s groups=(left:%s, right:%s, both:%s) tips=(left:%s, right:%s) joint_states_dir=%s publish_static_obstacles=%d enable_gripper_control=%d simulated_gripper_action_sec=%.2f gripper_action_delay_sec=%.2f inspect_front_trigger_service=%s inspect_back_trigger_service=%s skip_inspect_handover=%d controlled_arm=%s",
       log_utils::bjtNowString().c_str(),
+      armMode.c_str(),
+      leftPlanningGroup.c_str(),
+      isSingleArm ? "<disabled>" : rightPlanningGroup.c_str(),
+      bothPlanningGroup.c_str(),
+      leftTipLink.c_str(),
+      isSingleArm ? "<disabled>" : rightTipLink.c_str(),
+      jointStatesDir.c_str(),
       publishStaticObstacles,
       enableGripperControl,
       simulatedGripperActionSec,
@@ -137,10 +208,10 @@ struct SmJeArmPcbInspection : public smacc2::SmaccStateMachineBase<SmJeArmPcbIns
     this->setGlobalSMData(
       std::string(sm_data::kActivateResumeSubstateId),
       std::string(sm_data::kActivateSubstateP1));
-      this->setGlobalSMData(std::string(sm_data::kBackToIdleResumeFromPause), false);
-      this->setGlobalSMData(
-        std::string(sm_data::kActivateDelayNextSubstateId),
-        std::string(sm_data::kActivateSubstateP1));
+    this->setGlobalSMData(std::string(sm_data::kBackToIdleResumeFromPause), false);
+    this->setGlobalSMData(
+      std::string(sm_data::kActivateDelayNextSubstateId),
+      std::string(sm_data::kActivateSubstateP1));
     this->setGlobalSMData(std::string(sm_data::kWorkResumeSubstateId), std::string(sm_data::kWorkSubstatePick));
     this->setGlobalSMData(std::string(sm_data::kWorkDelayNextSubstateId), std::string(sm_data::kWorkSubstatePick));
     this->setGlobalSMData(std::string(sm_data::kPickResumeFromPause), false);
@@ -160,13 +231,28 @@ struct SmJeArmPcbInspection : public smacc2::SmaccStateMachineBase<SmJeArmPcbIns
     this->setGlobalSMData(std::string(sm_data::kLeftSlotFree), false);
     this->setGlobalSMData(std::string(sm_data::kRightSlotFree), false);
     this->setGlobalSMData(std::string(sm_data::kPcbTargetFrameId), std::string("base_link"));
-    this->setGlobalSMData(std::string(sm_data::kPcbTargetX), -0.21966061203147025);
-    this->setGlobalSMData(std::string(sm_data::kPcbTargetY), -0.5379023504590841);
-    this->setGlobalSMData(std::string(sm_data::kPcbTargetZ), 0.48856085197117777);
-    this->setGlobalSMData(std::string(sm_data::kPcbTargetQx), 0.11276390219028114);
-    this->setGlobalSMData(std::string(sm_data::kPcbTargetQy), 0.9929116822698711);
-    this->setGlobalSMData(std::string(sm_data::kPcbTargetQz), 0.01442683026805081);
-    this->setGlobalSMData(std::string(sm_data::kPcbTargetQw), -0.03467794894817312);
+    if (isSingleArm)
+    {
+      // MK2 single-arm FK (base_link -> sdk_flange) for pick joints:
+      // [-0.9258, -1.0759, 0.0793, 1.4748, -0.0108, 0.6352, 0.6211]
+      this->setGlobalSMData(std::string(sm_data::kPcbTargetX), 0.0825789456);
+      this->setGlobalSMData(std::string(sm_data::kPcbTargetY), -0.2746188395);
+      this->setGlobalSMData(std::string(sm_data::kPcbTargetZ), 0.5586755707);
+      this->setGlobalSMData(std::string(sm_data::kPcbTargetQx), -0.5052935366);
+      this->setGlobalSMData(std::string(sm_data::kPcbTargetQy), 0.5056435555);
+      this->setGlobalSMData(std::string(sm_data::kPcbTargetQz), 0.5292046495);
+      this->setGlobalSMData(std::string(sm_data::kPcbTargetQw), -0.4571055410);
+    }
+    else
+    {
+      this->setGlobalSMData(std::string(sm_data::kPcbTargetX), -0.21966061203147025);
+      this->setGlobalSMData(std::string(sm_data::kPcbTargetY), -0.5379023504590841);
+      this->setGlobalSMData(std::string(sm_data::kPcbTargetZ), 0.48856085197117777);
+      this->setGlobalSMData(std::string(sm_data::kPcbTargetQx), 0.11276390219028114);
+      this->setGlobalSMData(std::string(sm_data::kPcbTargetQy), 0.9929116822698711);
+      this->setGlobalSMData(std::string(sm_data::kPcbTargetQz), 0.01442683026805081);
+      this->setGlobalSMData(std::string(sm_data::kPcbTargetQw), -0.03467794894817312);
+    }
     this->setGlobalSMData(std::string(sm_data::kPlaceTargetFrameId), std::string("base_link"));
     this->setGlobalSMData(std::string(sm_data::kPlaceTargetX), -0.3182978287647691);
     this->setGlobalSMData(std::string(sm_data::kPlaceTargetY), -0.30670100572292247);
@@ -176,13 +262,42 @@ struct SmJeArmPcbInspection : public smacc2::SmaccStateMachineBase<SmJeArmPcbIns
     this->setGlobalSMData(std::string(sm_data::kPlaceTargetQz), -0.06353018502134283);
     this->setGlobalSMData(std::string(sm_data::kPlaceTargetQw), 0.00012199578306026244);
     this->setGlobalSMData(std::string(sm_data::kWaitResourcesPoseFrameId), std::string("base_link"));
-    this->setGlobalSMData(std::string(sm_data::kWaitResourcesPoseX), -0.2672000000000001);
-    this->setGlobalSMData(std::string(sm_data::kWaitResourcesPoseY), -0.19259999999999997);
-    this->setGlobalSMData(std::string(sm_data::kWaitResourcesPoseZ), 0.5103000000000001);
-    this->setGlobalSMData(std::string(sm_data::kWaitResourcesPoseQx), 0.9979704276802437);
-    this->setGlobalSMData(std::string(sm_data::kWaitResourcesPoseQy), -0.004350423415540621);
-    this->setGlobalSMData(std::string(sm_data::kWaitResourcesPoseQz), -0.06353018502134283);
-    this->setGlobalSMData(std::string(sm_data::kWaitResourcesPoseQw), 0.00012199578306026244);
+    if (isSingleArm)
+    {
+      geometry_msgs::msg::PoseStamped waitPose;
+      std::string waitPosePath;
+      std::string waitPoseError;
+      if (!utils::loadWaitResourcesPose(waitPose, waitPosePath, waitPoseError))
+      {
+        throw std::runtime_error(
+          "Failed to load wait_resources.yaml (" + waitPosePath + "): " + waitPoseError);
+      }
+      RCLCPP_INFO(
+        log_utils::bizLogger(),
+        "Wait-resources pose from %s: frame=%s pos=(%.4f, %.4f, %.4f) quat=(%.4f, %.4f, %.4f, %.4f)",
+        waitPosePath.c_str(), waitPose.header.frame_id.c_str(),
+        waitPose.pose.position.x, waitPose.pose.position.y, waitPose.pose.position.z,
+        waitPose.pose.orientation.x, waitPose.pose.orientation.y,
+        waitPose.pose.orientation.z, waitPose.pose.orientation.w);
+      this->setGlobalSMData(std::string(sm_data::kWaitResourcesPoseFrameId), waitPose.header.frame_id);
+      this->setGlobalSMData(std::string(sm_data::kWaitResourcesPoseX), waitPose.pose.position.x);
+      this->setGlobalSMData(std::string(sm_data::kWaitResourcesPoseY), waitPose.pose.position.y);
+      this->setGlobalSMData(std::string(sm_data::kWaitResourcesPoseZ), waitPose.pose.position.z);
+      this->setGlobalSMData(std::string(sm_data::kWaitResourcesPoseQx), waitPose.pose.orientation.x);
+      this->setGlobalSMData(std::string(sm_data::kWaitResourcesPoseQy), waitPose.pose.orientation.y);
+      this->setGlobalSMData(std::string(sm_data::kWaitResourcesPoseQz), waitPose.pose.orientation.z);
+      this->setGlobalSMData(std::string(sm_data::kWaitResourcesPoseQw), waitPose.pose.orientation.w);
+    }
+    else
+    {
+      this->setGlobalSMData(std::string(sm_data::kWaitResourcesPoseX), -0.2672000000000001);
+      this->setGlobalSMData(std::string(sm_data::kWaitResourcesPoseY), -0.19259999999999997);
+      this->setGlobalSMData(std::string(sm_data::kWaitResourcesPoseZ), 0.5103000000000001);
+      this->setGlobalSMData(std::string(sm_data::kWaitResourcesPoseQx), 0.9979704276802437);
+      this->setGlobalSMData(std::string(sm_data::kWaitResourcesPoseQy), -0.004350423415540621);
+      this->setGlobalSMData(std::string(sm_data::kWaitResourcesPoseQz), -0.06353018502134283);
+      this->setGlobalSMData(std::string(sm_data::kWaitResourcesPoseQw), 0.00012199578306026244);
+    }
     this->setGlobalSMData(std::string(sm_data::kWaitTimeoutSec), 120.0);
     this->setGlobalSMData(std::string(sm_data::kWorkCycleSec), 2.0);
     this->setGlobalSMData(std::string(sm_data::kBackHomeSec), 1.5);
@@ -208,7 +323,10 @@ struct SmJeArmPcbInspection : public smacc2::SmaccStateMachineBase<SmJeArmPcbIns
       });
 
     this->createOrthogonal<OrLeftArm>();
-    this->createOrthogonal<OrRightArm>();
+    if (!isSingleArm)
+    {
+      this->createOrthogonal<OrRightArm>();
+    }
     this->createOrthogonal<OrBothArms>();
     this->createOrthogonal<OrGripper>();
     this->createOrthogonal<OrKeyboard>();

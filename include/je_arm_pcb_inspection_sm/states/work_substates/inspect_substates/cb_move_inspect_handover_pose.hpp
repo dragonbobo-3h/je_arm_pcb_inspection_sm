@@ -40,25 +40,31 @@ public:
 
     auto * stateMachine = this->getStateMachine();
     std::string anchorDescription = "pcb_target";
+    const auto leftTip = je_arm_pcb_inspection_sm::getLeftTipLink(this->getNode());
+    const auto rightTip = je_arm_pcb_inspection_sm::getRightTipLink(this->getNode());
 
     if (offsetKey_ == "right_receive")
     {
-      pose = getCurrentPoseFromOrthogonal<je_arm_pcb_inspection_sm::OrRightArm>("Link27");
+      tip_link_ = rightTip;
+      pose = getCurrentPoseFromOrthogonal<je_arm_pcb_inspection_sm::OrRightArm>(rightTip);
       anchorDescription = "right_arm_current_pose";
     }
     else if (offsetKey_ == "left_receive")
     {
-      pose = getCurrentPoseFromOrthogonal<je_arm_pcb_inspection_sm::OrLeftArm>("Link17");
+      tip_link_ = leftTip;
+      pose = getCurrentPoseFromOrthogonal<je_arm_pcb_inspection_sm::OrLeftArm>(leftTip);
       anchorDescription = "left_arm_current_pose";
     }
     else if (offsetKey_ == "right_retreat")
     {
-      pose = getCurrentPoseFromOrthogonal<je_arm_pcb_inspection_sm::OrRightArm>("Link27");
+      tip_link_ = rightTip;
+      pose = getCurrentPoseFromOrthogonal<je_arm_pcb_inspection_sm::OrRightArm>(rightTip);
       anchorDescription = "right_arm_current_pose";
     }
     else if (offsetKey_ == "left_retreat")
     {
-      pose = getCurrentPoseFromOrthogonal<je_arm_pcb_inspection_sm::OrLeftArm>("Link17");
+      tip_link_ = leftTip;
+      pose = getCurrentPoseFromOrthogonal<je_arm_pcb_inspection_sm::OrLeftArm>(leftTip);
       anchorDescription = "left_arm_current_pose";
     }
     else

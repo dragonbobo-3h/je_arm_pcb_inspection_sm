@@ -8,6 +8,8 @@
 #include <moveit/robot_state/robot_state.h>
 #include <yaml-cpp/yaml.h>
 
+#include "je_arm_pcb_inspection_sm/orthogonals/or_arm.hpp"
+
 namespace je_arm_pcb_inspection_sm
 {
 
@@ -30,14 +32,19 @@ public:
       }
       moveit::core::RobotState targetState(*currentState);
       const auto * group = targetState.getJointModelGroup(moveGroup.getName());
-      tip_link_ = "Link17";
+      tip_link_ = getLeftTipLink(this->getNode());
       if (!group || !targetState.getRobotModel()->hasLinkModel(tip_link_))
       {
-        throw std::runtime_error("return planning group or tip link is unavailable");
+        throw std::runtime_error("return planning group or tip link is unavailable: " + tip_link_);
       }
 
+      std::string jointStatesDir = "config/move_group_client/joint_states";
+      if (auto node = this->getNode())
+      {
+        node->get_parameter_or("joint_states_dir", jointStatesDir, jointStatesDir);
+      }
       const auto path = ament_index_cpp::get_package_share_directory("je_arm_pcb_inspection_sm") +
-        "/config/move_group_client/joint_states/dual_pick_p2.yaml";
+        "/" + jointStatesDir + "/dual_pick_p2.yaml";
       const auto config = YAML::LoadFile(path);
       const auto joints = config["joint_states"];
       // Only use the controlled planning group's joints, just as the existing

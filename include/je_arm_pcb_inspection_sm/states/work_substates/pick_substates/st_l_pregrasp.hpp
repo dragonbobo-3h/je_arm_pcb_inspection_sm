@@ -33,13 +33,12 @@ namespace pick_substates
 class CbMovePcbTargetPose : public cl_moveit2z::CbMoveEndEffectorLinearSeeded
 {
 public:
-  CbMovePcbTargetPose()
-  {
-    tip_link_ = "Link17";
-  }
+  CbMovePcbTargetPose() = default;
 
   void onEntry() override
   {
+    tip_link_ = getLeftTipLink(this->getNode());
+
     geometry_msgs::msg::PoseStamped pose;
     pose.header.frame_id = "base_link";
     pose.pose.orientation.w = 1.0;

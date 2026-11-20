@@ -4,8 +4,8 @@
 
 #include <smacc2/smacc.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <cl_moveit2z/client_behaviors/cb_move_known_state.hpp>
 
+#include "je_arm_pcb_inspection_sm/behaviors/cb_move_mode_known_state.hpp"
 #include "je_arm_pcb_inspection_sm/components/cp_top_level_flow.hpp"
 #include "je_arm_pcb_inspection_sm/behaviors/cb_return_to_start_linear.hpp"
 #include "je_arm_pcb_inspection_sm/orthogonals/or_arm.hpp"
@@ -28,8 +28,8 @@ struct StBack : smacc2::SmaccState<StBack, SmJeArmPcbInspection>
   using SmaccState::SmaccState;
 
   typedef boost::mpl::list<
-    smacc2::Transition<smacc2::EvCbSuccess<cl_moveit2z::CbMoveKnownState, OrArm>, StWaitResources>,
-    smacc2::Transition<smacc2::EvCbFailure<cl_moveit2z::CbMoveKnownState, OrArm>, StPause>,
+    smacc2::Transition<smacc2::EvCbSuccess<CbMoveModeKnownState, OrArm>, StWaitResources>,
+    smacc2::Transition<smacc2::EvCbFailure<CbMoveModeKnownState, OrArm>, StPause>,
     smacc2::Transition<smacc2::EvCbSuccess<CbReturnToStartLinear, OrArm>, StWaitResources>,
     smacc2::Transition<smacc2::EvCbFailure<CbReturnToStartLinear, OrArm>, StPause>,
     smacc2::Transition<EvDelayRequested, StDelay>,
@@ -45,9 +45,9 @@ struct StBack : smacc2::SmaccState<StBack, SmJeArmPcbInspection>
     }
     else
     {
-      this->configure<OrArm, cl_moveit2z::CbMoveKnownState>(
+      this->configure<OrArm, CbMoveModeKnownState>(
         "je_arm_pcb_inspection_sm",
-        "config/move_group_client/joint_states/dual_pick_p2.yaml");
+        "dual_pick_p2.yaml");
     }
   }
 

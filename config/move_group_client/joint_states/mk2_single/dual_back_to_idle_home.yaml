@@ -1,0 +1,10 @@
+# MK2 single-arm (jearm) BACK_TO_IDLE home waypoint.
+# PLACEHOLDER values copied from MK1 left arm; RE-TEACH on MK2 before real execution.
+joint_states:
+  joint1: 0.0
+  joint2: -1.570
+  joint3: 0.0
+  joint4: 0.0
+  joint5: 0.0
+  joint6: 0.0
+  joint7: 0.0

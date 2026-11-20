@@ -58,7 +58,7 @@ struct StCartesianDown : smacc2::SmaccState<StCartesianDown, StPick>
         state.getGlobalSMData(std::string(sm_data::kPcbTargetQz), pose.pose.orientation.z);
         state.getGlobalSMData(std::string(sm_data::kPcbTargetQw), pose.pose.orientation.w);
 
-        bh.tip_link_ = "Link17";
+        bh.tip_link_ = getLeftTipLink(state.getNode());
         bh.targetPose = pose;
 
         RCLCPP_INFO(

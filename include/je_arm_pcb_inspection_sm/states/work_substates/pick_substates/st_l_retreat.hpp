@@ -70,7 +70,7 @@ struct StLRetreat : smacc2::SmaccState<StLRetreat, StPick>
         pose.pose.position.y += offsetY;
         pose.pose.position.z += offsetZ;
 
-        bh.tip_link_ = "Link17";
+        bh.tip_link_ = getLeftTipLink(state.getNode());
         bh.targetPose = pose;
 
         RCLCPP_INFO(

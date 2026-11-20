@@ -1,8 +1,8 @@
 #pragma once
 
-#include <cl_moveit2z/client_behaviors/cb_move_known_state.hpp>
 #include <smacc2/smacc.hpp>
 
+#include "je_arm_pcb_inspection_sm/behaviors/cb_move_mode_known_state.hpp"
 #include "je_arm_pcb_inspection_sm/components/cp_top_level_flow.hpp"
 #include "je_arm_pcb_inspection_sm/events.hpp"
 #include "je_arm_pcb_inspection_sm/orthogonals/or_arm.hpp"
@@ -30,15 +30,15 @@ struct StPlaceReturnToPick : smacc2::SmaccState<StPlaceReturnToPick, StPlace>
   using SmaccState::SmaccState;
 
   typedef boost::mpl::list<
-    smacc2::Transition<smacc2::EvCbSuccess<cl_moveit2z::CbMoveKnownState, OrArm>, StDelay>,
-    smacc2::Transition<smacc2::EvCbFailure<cl_moveit2z::CbMoveKnownState, OrArm>, StPause>,
+    smacc2::Transition<smacc2::EvCbSuccess<CbMoveModeKnownState, OrArm>, StDelay>,
+    smacc2::Transition<smacc2::EvCbFailure<CbMoveModeKnownState, OrArm>, StPause>,
     smacc2::Transition<EvPauseRequested, StPause>
   > reactions;
 
   static void staticConfigure()
   {
-    configure_orthogonal<OrArm, cl_moveit2z::CbMoveKnownState>(
-      "je_arm_pcb_inspection_sm", "config/move_group_client/joint_states/dual_pick_p2.yaml");
+    configure_orthogonal<OrArm, CbMoveModeKnownState>(
+      "je_arm_pcb_inspection_sm", "dual_pick_p2.yaml");
   }
 
   void onEntry()

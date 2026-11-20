@@ -3,8 +3,7 @@
 #include <smacc2/smacc.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-#include <cl_moveit2z/client_behaviors/cb_move_known_state.hpp>
-
+#include "je_arm_pcb_inspection_sm/behaviors/cb_move_mode_known_state.hpp"
 #include "je_arm_pcb_inspection_sm/events.hpp"
 #include "je_arm_pcb_inspection_sm/orthogonals/or_arm.hpp"
 #include "je_arm_pcb_inspection_sm/sm_data.hpp"
@@ -30,19 +29,19 @@ struct StInspectReturnWaitPose : smacc2::SmaccState<StInspectReturnWaitPose, StI
 
   typedef boost::mpl::list<
     smacc2::Transition<
-      smacc2::EvCbSuccess<cl_moveit2z::CbMoveKnownState, OrBothArms>,
+      smacc2::EvCbSuccess<CbMoveModeKnownState, OrBothArms>,
       StInspectWaitPlaceResult>,
     smacc2::Transition<
-      smacc2::EvCbFailure<cl_moveit2z::CbMoveKnownState, OrBothArms>,
+      smacc2::EvCbFailure<CbMoveModeKnownState, OrBothArms>,
       StPause>,
     smacc2::Transition<EvPauseRequested, StPause>
   > reactions;
 
   static void staticConfigure()
   {
-    configure_orthogonal<OrBothArms, cl_moveit2z::CbMoveKnownState>(
+    configure_orthogonal<OrBothArms, CbMoveModeKnownState>(
       "je_arm_pcb_inspection_sm",
-      "config/move_group_client/joint_states/dual_pick_p2.yaml");
+      "dual_pick_p2.yaml");
   }
 
   void onEntry()

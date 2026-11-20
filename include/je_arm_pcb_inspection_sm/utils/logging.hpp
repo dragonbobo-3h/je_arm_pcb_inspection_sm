@@ -66,10 +66,11 @@ inline std::string formatArmSnapshot(smacc2::ISmaccStateMachine & sm)
     }
     oss << '}';
 
-    const auto poseStamped = mgi.getCurrentPose("Link17");
+    const auto tipLink = je_arm_pcb_inspection_sm::getLeftTipLink(sm.getNode());
+    const auto poseStamped = mgi.getCurrentPose(tipLink);
     const auto & p = poseStamped.pose.position;
     const auto & q = poseStamped.pose.orientation;
-    oss << " | ee(frame=" << poseStamped.header.frame_id
+    oss << " | ee(link=" << tipLink << ", frame=" << poseStamped.header.frame_id
         << ", pos=[" << p.x << ", " << p.y << ", " << p.z << ']'
         << ", quat=[" << q.x << ", " << q.y << ", " << q.z << ", " << q.w << "])";
   }

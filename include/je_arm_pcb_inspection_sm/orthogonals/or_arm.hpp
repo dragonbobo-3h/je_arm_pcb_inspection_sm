@@ -15,6 +15,7 @@
 #pragma once
 
 #include <chrono>
+#include <string>
 
 #include <cl_moveit2z/cl_moveit2z.hpp>
 #include <cl_moveit2z/components/cp_motion_planner.hpp>
@@ -29,16 +30,44 @@ namespace je_arm_pcb_inspection_sm
 {
 using namespace std::chrono_literals;
 
+inline std::string getLeftTipLink(const rclcpp::Node::SharedPtr & node)
+{
+  std::string tipLink = "sdk_flange";
+  if (node)
+  {
+    node->get_parameter_or("left_tip_link", tipLink, std::string("sdk_flange"));
+  }
+  return tipLink;
+}
+
+inline std::string getRightTipLink(const rclcpp::Node::SharedPtr & node)
+{
+  std::string tipLink = "Right_Link7";
+  if (node)
+  {
+    node->get_parameter_or("right_tip_link", tipLink, std::string("Right_Link7"));
+  }
+  return tipLink;
+}
+
 class OrLeftArm : public smacc2::Orthogonal<OrLeftArm>
 {
 public:
   void onInitialize() override
   {
     auto node = this->getNode();
-    bool enableVirtualGraspBoxes = true;
-    node->get_parameter_or("enable_virtual_grasp_boxes", enableVirtualGraspBoxes, true);
+    bool enableVirtualGraspBoxes = false;
+    std::string planningGroup = "jearm";
+    node->get_parameter_or("enable_virtual_grasp_boxes", enableVirtualGraspBoxes, false);
+    node->get_parameter_or("left_planning_group", planningGroup, std::string("jearm"));
 
-    auto move_group_client = this->createClient<cl_moveit2z::ClMoveit2z>("left_arm");
+    RCLCPP_INFO(
+      node->get_logger(),
+      "Initializing OrLeftArm with planning_group='%s', tip_link='%s'",
+      planningGroup.c_str(),
+      getLeftTipLink(node).c_str());
+
+    auto move_group_client = this->createClient<cl_moveit2z::ClMoveit2z>(planningGroup);
     move_group_client->createComponent<cl_moveit2z::CpMotionPlanner>();
     move_group_client->createComponent<cl_moveit2z::CpTrajectoryExecutor>();
     move_group_client->createComponent<cl_moveit2z::CpTrajectoryHistory>();
@@ -50,7 +79,7 @@ public:
 
     auto graspingComponent = move_group_client->createComponent<cl_moveit2z::CpGraspingComponent>();
 
-    graspingComponent->gripperLink_ = "Link17";
+    graspingComponent->gripperLink_ = getLeftTipLink(node);
     graspingComponent->createGraspableBox("virtualBox", 0, 0.5, 0.5, 0.1, 0.1, 0.1);
   }
 };
@@ -61,10 +90,18 @@ public:
   void onInitialize() override
   {
     auto node = this->getNode();
-    bool enableVirtualGraspBoxes = true;
-    node->get_parameter_or("enable_virtual_grasp_boxes", enableVirtualGraspBoxes, true);
+    bool enableVirtualGraspBoxes = false;
+    std::string planningGroup = "right_arm";
+    node->get_parameter_or("enable_virtual_grasp_boxes", enableVirtualGraspBoxes, false);
+    node->get_parameter_or("right_planning_group", planningGroup, std::string("right_arm"));
 
-    auto move_group_client = this->createClient<cl_moveit2z::ClMoveit2z>("right_arm");
+    RCLCPP_INFO(
+      node->get_logger(),
+      "Initializing OrRightArm with planning_group='%s', tip_link='%s'",
+      planningGroup.c_str(),
+      getRightTipLink(node).c_str());
+
+    auto move_group_client = this->createClient<cl_moveit2z::ClMoveit2z>(planningGroup);
     move_group_client->createComponent<cl_moveit2z::CpMotionPlanner>();
     move_group_client->createComponent<cl_moveit2z::CpTrajectoryExecutor>();
     move_group_client->createComponent<cl_moveit2z::CpTrajectoryHistory>();
@@ -76,7 +113,7 @@ public:
 
     auto graspingComponent = move_group_client->createComponent<cl_moveit2z::CpGraspingComponent>();
 
-    graspingComponent->gripperLink_ = "Link27";
+    graspingComponent->gripperLink_ = getRightTipLink(node);
     graspingComponent->createGraspableBox("virtualBox", 0, 0.5, 0.5, 0.1, 0.1, 0.1);
   }
 };
@@ -86,7 +123,16 @@ class OrBothArms : public smacc2::Orthogonal<OrBothArms>
 public:
   void onInitialize() override
   {
-    auto move_group_client = this->createClient<cl_moveit2z::ClMoveit2z>("both_arms");
+    auto node = this->getNode();
+    std::string planningGroup = "jearm";
+    node->get_parameter_or("both_planning_group", planningGroup, std::string("jearm"));
+
+    RCLCPP_INFO(
+      node->get_logger(),
+      "Initializing OrBothArms with planning_group='%s'",
+      planningGroup.c_str());
+
+    auto move_group_client = this->createClient<cl_moveit2z::ClMoveit2z>(planningGroup);
     move_group_client->createComponent<cl_moveit2z::CpMotionPlanner>();
     move_group_client->createComponent<cl_moveit2z::CpTrajectoryExecutor>();
     move_group_client->createComponent<cl_moveit2z::CpTrajectoryHistory>();

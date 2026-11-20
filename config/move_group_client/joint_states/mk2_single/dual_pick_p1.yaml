@@ -1,0 +1,11 @@
+# MK2 single-arm (jearm) ACTIVATE P1 waypoint.
+joint_states:
+  joint1: 0.0
+  joint2: -1.57
+  joint3: -1.63
+  joint4: 0.0
+  joint5: 0.0
+  joint6: -0.9603
+  joint7: 0.0
+
+scaling_factor: 0.5

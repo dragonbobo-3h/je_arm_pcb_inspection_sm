@@ -1,10 +1,10 @@
 joint_states:
-  joint11: 0.5267
-  joint12: -1.1596
-  joint13: -1.2724
-  joint14: -2.0860
-  joint15: -0.2386
-  joint16: 1.3659
-  joint17: -0.0236
+  joint11: -0.4635
+  joint12: -1.2377
+  joint13: -0.6526
+  joint14: 1.5843
+  joint15: 0.9101
+  joint16: -0.7690
+  joint17: -0.0000
 
 scaling_factor: 0.5

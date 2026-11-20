@@ -5,6 +5,7 @@
 
 #include <cl_moveit2z/client_behaviors/cb_move_end_effector_linear_seeded.hpp>
 
+#include "je_arm_pcb_inspection_sm/orthogonals/or_arm.hpp"
 #include "je_arm_pcb_inspection_sm/sm_data.hpp"
 #include "je_arm_pcb_inspection_sm/components/cp_top_level_flow.hpp"
 #include "je_arm_pcb_inspection_sm/utils/pick_offset_loader.hpp"
@@ -22,11 +23,12 @@ class CbMovePlaceTargetPose : public cl_moveit2z::CbMoveEndEffectorLinearSeeded
 public:
   CbMovePlaceTargetPose(bool useYamlOffset = false) : useYamlOffset_(useYamlOffset)
   {
-    tip_link_ = "Link17";
   }
 
   void onEntry() override
   {
+    tip_link_ = getLeftTipLink(this->getNode());
+
     geometry_msgs::msg::PoseStamped pose;
     pose.header.frame_id = "base_link";
     pose.pose.position.x = -0.3182978288;
