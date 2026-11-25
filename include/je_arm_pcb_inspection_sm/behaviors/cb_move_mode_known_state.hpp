@@ -103,11 +103,15 @@ private:
         scalingFactor_ = root["scaling_factor"].as<double>();
       }
 
+      applyMotionSpeedOverride(pkgPath);
+
       RCLCPP_INFO(
         getLogger(),
-        "[CbMoveModeKnownState] Loaded %zu joints from %s",
+        "[CbMoveModeKnownState] Loaded %zu joints from %s (vel_scale=%.3f, acc_scale=%.3f)",
         jointStates.size(),
-        filepath.c_str());
+        filepath.c_str(),
+        scalingFactor_.value_or(1.0),
+        accelerationScalingFactor_.value_or(1.0));
     }
     catch (const std::exception & ex)
     {
@@ -120,6 +124,46 @@ private:
     }
 
     return jointStates;
+  }
+
+  void applyMotionSpeedOverride(const std::string & pkgPath)
+  {
+    const std::string speedPath = pkgPath + "/config/motion_speed.yaml";
+    if (!std::filesystem::exists(speedPath))
+    {
+      return;
+    }
+
+    try
+    {
+      const YAML::Node speedRoot = YAML::LoadFile(speedPath);
+      const double globalScale =
+        speedRoot["global_speed_scale"] ? speedRoot["global_speed_scale"].as<double>() : 1.0;
+
+      if (speedRoot["joint_velocity_scaling"])
+      {
+        const double v = speedRoot["joint_velocity_scaling"].as<double>() * globalScale;
+        scalingFactor_ = std::clamp(v, 0.05, 1.0);
+      }
+      else if (scalingFactor_)
+      {
+        scalingFactor_ = std::clamp(*scalingFactor_ * globalScale, 0.05, 1.0);
+      }
+
+      if (speedRoot["joint_acceleration_scaling"])
+      {
+        const double a = speedRoot["joint_acceleration_scaling"].as<double>() * globalScale;
+        accelerationScalingFactor_ = std::clamp(a, 0.05, 1.0);
+      }
+    }
+    catch (const std::exception & ex)
+    {
+      RCLCPP_WARN(
+        getLogger(),
+        "[CbMoveModeKnownState] Failed to parse %s: %s",
+        speedPath.c_str(),
+        ex.what());
+    }
   }
 
   std::string pkg_;

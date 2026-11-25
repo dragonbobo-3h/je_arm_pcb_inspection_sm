@@ -8,3 +8,5 @@ joint_states:
   joint5: 0.0
   joint6: 0.0
   joint7: 0.0
+
+scaling_factor: 0.5

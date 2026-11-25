@@ -1,0 +1,14 @@
+# 运行时运动速度配置文件（修改保存后立即生效，无需重新编译、无需重启节点）
+# 所有倍率范围均为 (0.0, 1.0]，1.0 表示 100% 使用 MoveIt 关节限速 (1.5~2.0 rad/s, 6.0 rad/s^2)
+
+# 全局总速度倍率：同时作用于关节运动与笛卡尔直线运动（想整体调快/调慢只改这个即可）
+global_speed_scale: 1.0
+
+# 关节空间运动速度/加速度倍率（ACTIVATE、BACK_TO_IDLE、INSPECT 等）
+# 会乘以 global_speed_scale，并覆盖 joint_states/*.yaml 中的 scaling_factor
+joint_velocity_scaling: 0.5
+joint_acceleration_scaling: 0.5
+
+# 笛卡尔直线运动速度倍率（PICK、PLACE、RETREAT 等）
+# 会乘以 global_speed_scale，并覆盖 cl_moveit2z/config/cartesian.yaml 中的 velocity_scaling
+cartesian_velocity_scaling: 1.0
